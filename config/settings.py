@@ -20,6 +20,9 @@ if _env_path.exists():
 # Security settings
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-railsaathi-secret-key-prod-grade-mvp-2026')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1', 't')
+_is_render = os.environ.get('RENDER', '').lower() == 'true'
+if _is_render:
+    DEBUG = False
 
 # In production set ALLOWED_HOSTS via environment; never use '*' in production
 _allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '')
@@ -29,6 +32,11 @@ elif DEBUG:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
 else:
     ALLOWED_HOSTS = []  # Must be set via ALLOWED_HOSTS env var in production
+
+if _is_render:
+    _render_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'e-rail.onrender.com')
+    if _render_hostname and _render_hostname not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_render_hostname)
 
 # Application definition
 INSTALLED_APPS = [
