@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}RailSaathi - One Platform for Every Railway Station Need{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}RailSaathi is the smart railway station assistance platform: book verified coolies, explore station facilities, request wheelchair assistance, report lost items, and submit feedback.{% endblock %}">
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- FontAwesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Custom Design Tokens -->
+  <link rel="stylesheet" href="/static/css/styles.css">
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-railsaathi">
+    <div class="container">
+      <a class="brand-logo" href="{% url 'landing' %}">
+        <span>🚆</span>
+        <span>Rail<span style="color: var(--rs-blue-accent);">Saathi</span></span>
+      </a>
+
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+        <i class="fas fa-bars fs-4 text-dark"></i>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarMain">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+          <li class="nav-item">
+            <a class="nav-link nav-link-custom" href="{% url 'landing' %}"><i class="fas fa-home me-1"></i> Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-link-custom" href="{% url 'bookings:book_coolie' %}"><i class="fas fa-luggage-cart me-1"></i> Book Coolie</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-link-custom" href="{% url 'assistance:request' %}"><i class="fas fa-wheelchair me-1"></i> Assistance</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-link-custom" href="{% url 'stations:station_list' %}"><i class="fas fa-building me-1"></i> Facilities</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-link-custom" href="{% url 'lost_found:index' %}"><i class="fas fa-search me-1"></i> Lost & Found</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-link-custom" href="{% url 'complaints:submit' %}"><i class="fas fa-bullhorn me-1"></i> Grievances</a>
+          </li>
+        </ul>
+
+        <div class="d-flex align-items-center gap-2">
+          {% if user.is_authenticated %}
+            <!-- Notifications Bell -->
+            <a href="{% url 'accounts:notifications' %}" class="btn btn-rs-outline position-relative py-2 px-3">
+              <i class="fas fa-bell"></i>
+              {% if unread_notifications_count > 0 %}
+                <span class="notif-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                  {{ unread_notifications_count }}
+                </span>
+              {% else %}
+                <span class="notif-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">0</span>
+              {% endif %}
+            </a>
+
+            <!-- Role Dashboard Button -->
+            {% if is_station_admin %}
+              <a href="{% url 'admin_portal:dashboard' %}" class="btn btn-rs-primary">
+                <i class="fas fa-shield-alt me-1"></i> Admin Portal
+              </a>
+            {% elif is_coolie %}
+              <a href="{% url 'coolies:dashboard' %}" class="btn btn-rs-primary">
+                <i class="fas fa-user-cog me-1"></i> Sahayak Hub
+              </a>
+            {% else %}
+              <a href="{% url 'accounts:passenger_dashboard' %}" class="btn btn-rs-primary">
+                <i class="fas fa-user me-1"></i> My Dashboard
+              </a>
+            {% endif %}
+
+            <!-- User Menu -->
+            <div class="dropdown">
+              <button class="btn btn-light dropdown-toggle d-flex align-items-center gap-2 border rounded-pill px-3 py-1" type="button" data-bs-toggle="dropdown">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-weight: 700; font-size: 14px;">
+                  {{ user.first_name|default:user.username|slice:":1"|upper }}
+                </div>
+                <span class="fw-semibold small d-none d-md-inline">{{ user.first_name|default:user.username }}</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4">
+                <li><h6 class="dropdown-header">{{ user.get_role_display|default:"Passenger" }}</h6></li>
+                <li><a class="dropdown-item" href="{% url 'accounts:passenger_dashboard' %}"><i class="fas fa-columns me-2 text-muted"></i> Dashboard</a></li>
+                <li><a class="dropdown-item" href="{% url 'bookings:history' %}"><i class="fas fa-history me-2 text-muted"></i> Booking History</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+              </ul>
+            </div>
+          {% else %}
+            <a href="{% url 'accounts:login' %}" class="btn btn-rs-outline">
+              <i class="fas fa-sign-in-alt me-1"></i> Login
+            </a>
+            <a href="{% url 'accounts:register' %}" class="btn btn-rs-accent">
+              <i class="fas fa-user-plus me-1"></i> Get Started
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash Messages / Toast Container -->
+  <div class="container mt-3">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm rounded-3 border-0 d-flex align-items-center gap-2" role="alert">
+          {% if message.tags == 'success' %}
+            <i class="fas fa-check-circle fs-5 text-success"></i>
+          {% elif message.tags == 'error' or message.tags == 'danger' %}
+            <i class="fas fa-exclamation-circle fs-5 text-danger"></i>
+          {% elif message.tags == 'warning' %}
+            <i class="fas fa-exclamation-triangle fs-5 text-warning"></i>
+          {% else %}
+            <i class="fas fa-info-circle fs-5 text-primary"></i>
+          {% endif %}
+          <div class="flex-grow-1 fw-medium">{{ message }}</div>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- Main Body Content -->
+  <main class="flex-grow-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if user.is_authenticated %}
+    <aside class="rs-assistant" aria-label="RailSaathi station assistant">
+      <button class="rs-assistant-toggle" type="button" aria-expanded="false" aria-controls="assistantPanel">
+        <i class="fas fa-robot" aria-hidden="true"></i><span>Ask Saathi</span>
+      </button>
+      <div class="rs-assistant-panel" id="assistantPanel" hidden>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <strong><i class="fas fa-sparkles text-primary me-1"></i>Saathi Assistant</strong>
+          <button class="btn btn-sm btn-light rs-assistant-close" type="button" aria-label="Close assistant"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="rs-assistant-messages" aria-live="polite"><p class="assistant-bubble assistant-bubble-bot">Hi! Ask me about fares, station facilities, assistance, or lost items.</p></div>
+        <form class="rs-assistant-form d-flex gap-2" action="{% url 'accounts:assistant_chat' %}" method="post">
+          {% csrf_token %}
+          <input class="form-control" name="message" placeholder="How can I help?" autocomplete="off" required>
+          <button class="btn btn-rs-primary px-3" type="submit" aria-label="Send message"><i class="fas fa-paper-plane"></i></button>
+        </form>
+      </div>
+    </aside>
+  {% endif %}
+
+  <!-- Footer -->
+  <footer class="bg-white border-top mt-5 py-5">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="brand-logo mb-3">
+            <span>🚆</span>
+            <span>Rail<span style="color: var(--rs-blue-accent);">Saathi</span></span>
+          </div>
+          <p class="text-muted mb-3" style="max-width: 320px;">
+            "One Platform for Every Railway Station Need" — Empowering Indian railway passengers with verified coolies, station support, special assistance, and fast grievance redressal.
+          </p>
+          <div class="d-flex gap-3 text-primary fs-5">
+            <a href="#" class="text-secondary"><i class="fab fa-twitter"></i></a>
+            <a href="#" class="text-secondary"><i class="fab fa-facebook"></i></a>
+            <a href="#" class="text-secondary"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="text-secondary"><i class="fab fa-linkedin"></i></a>
+          </div>
+        </div>
+
+        <div class="col-6 col-lg-2">
+          <h6 class="fw-bold text-dark mb-3">Services</h6>
+          <ul class="list-unstyled text-muted small d-flex flex-column gap-2">
+            <li><a href="{% url 'bookings:book_coolie' %}" class="text-decoration-none text-muted">🧳 Book Coolie</a></li>
+            <li><a href="{% url 'assistance:request' %}" class="text-decoration-none text-muted">♿ Wheelchair Help</a></li>
+            <li><a href="{% url 'stations:station_list' %}" class="text-decoration-none text-muted">🚻 Station Facilities</a></li>
+          </ul>
+        </div>
+
+        <div class="col-6 col-lg-2">
+          <h6 class="fw-bold text-dark mb-3">Support & Help</h6>
+          <ul class="list-unstyled text-muted small d-flex flex-column gap-2">
+            <li><a href="{% url 'lost_found:index' %}" class="text-decoration-none text-muted">🔎 Lost & Found</a></li>
+            <li><a href="{% url 'complaints:submit' %}" class="text-decoration-none text-muted">📢 Complaints</a></li>
+            <li><a href="{% url 'coolies:coolie_list' %}" class="text-decoration-none text-muted">🧑‍💼 Coolie Directory</a></li>
+            <li><a href="tel:139" class="text-decoration-none text-muted">📞 Railway Helpline: 139</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="rs-card p-4 bg-light border-0">
+            <h6 class="fw-bold text-dark mb-2">Emergency Station Contacts</h6>
+            <p class="small text-muted mb-3">For immediate medical or security support at railway stations:</p>
+            <div class="d-flex flex-wrap gap-2">
+              <a href="tel:139" class="btn btn-sm btn-outline-danger fw-bold rounded-pill"><i class="fas fa-phone-alt me-1"></i> Railway Help 139</a>
+              <a href="tel:182" class="btn btn-sm btn-outline-primary fw-bold rounded-pill"><i class="fas fa-shield-alt me-1"></i> RPF Security 182</a>
+              <a href="tel:112" class="btn btn-sm btn-outline-success fw-bold rounded-pill"><i class="fas fa-ambulance me-1"></i> Emergency 112</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4 text-muted opacity-25">
+
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-center text-muted small">
+        <div>&copy; 2026 RailSaathi Platform. Built for Indian Railway Stations.</div>
+        <div class="d-flex gap-3 mt-2 mt-md-0">
+          <a href="#" class="text-muted text-decoration-none">Privacy Policy</a>
+          <a href="#" class="text-muted text-decoration-none">Terms of Service</a>
+          <a href="#" class="text-muted text-decoration-none">API Documentation</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Core Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/static/js/main.js"></script>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

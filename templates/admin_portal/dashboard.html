@@ -1,0 +1,175 @@
+{% extends 'admin_portal/base_admin.html' %}
+
+{% block admin_content %}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+  <div>
+    <h3 class="fw-bold mb-1">Executive Station Operations Dashboard</h3>
+    <p class="text-muted small mb-0">Live monitoring of coolie deployments, passenger assistance, and grievances</p>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <span class="badge bg-success-subtle text-success p-2 px-3 rounded-pill fw-bold">
+      <span class="pulse-dot"></span> System Live & Operational
+    </span>
+  </div>
+</div>
+
+<!-- KPI Metrics Grid -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="rs-card p-3 bg-white">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted small fw-bold text-uppercase">Total Passengers</span>
+        <div class="p-2 bg-primary-subtle text-primary rounded-circle"><i class="fas fa-users"></i></div>
+      </div>
+      <h3 class="fw-bold text-dark mb-0">{{ total_passengers }}</h3>
+      <span class="text-muted small">Registered travelers</span>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="rs-card p-3 bg-white">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted small fw-bold text-uppercase">Verified Coolies</span>
+        <div class="p-2 bg-success-subtle text-success rounded-circle"><i class="fas fa-id-badge"></i></div>
+      </div>
+      <h3 class="fw-bold text-dark mb-0">{{ total_coolies }}</h3>
+      <span class="text-success small fw-bold"><i class="fas fa-circle small"></i> {{ online_coolies }} Online on Platforms</span>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="rs-card p-3 bg-white">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted small fw-bold text-uppercase">Active Bookings</span>
+        <div class="p-2 bg-warning-subtle text-warning rounded-circle"><i class="fas fa-luggage-cart"></i></div>
+      </div>
+      <h3 class="fw-bold text-warning mb-0">{{ active_bookings }}</h3>
+      <span class="text-muted small">{{ completed_bookings }} Completed</span>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="rs-card p-3 bg-white">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted small fw-bold text-uppercase">Total Fares Paid</span>
+        <div class="p-2 bg-info-subtle text-info rounded-circle"><i class="fas fa-rupee-sign"></i></div>
+      </div>
+      <h3 class="fw-bold text-success mb-0">₹{{ total_revenue }}</h3>
+      <span class="text-muted small">Sahayak earnings</span>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+  <!-- Chart 1: Daily Bookings -->
+  <div class="col-lg-8">
+    <div class="rs-card p-4 h-100">
+      <h5 class="fw-bold text-primary mb-3"><i class="fas fa-chart-area me-1"></i> Daily Porter Bookings (Last 7 Days)</h5>
+      <div style="height: 280px;">
+        <canvas id="dailyBookingsChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 2: Booking Status Breakdown -->
+  <div class="col-lg-4">
+    <div class="rs-card p-4 h-100">
+      <h5 class="fw-bold text-primary mb-3"><i class="fas fa-chart-pie me-1"></i> Booking Status Distribution</h5>
+      <div style="height: 280px;">
+        <canvas id="bookingStatusChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 3: Assistance Types -->
+  <div class="col-lg-6">
+    <div class="rs-card p-4 h-100">
+      <h5 class="fw-bold text-primary mb-3"><i class="fas fa-wheelchair me-1"></i> Assistance Requests by Category</h5>
+      <div style="height: 240px;">
+        <canvas id="assistanceTypesChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 4: Station Demand -->
+  <div class="col-lg-6">
+    <div class="rs-card p-4 h-100">
+      <h5 class="fw-bold text-primary mb-3"><i class="fas fa-train me-1"></i> Booking Demand by Station</h5>
+      <div style="height: 240px;">
+        <canvas id="stationDemandChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Operational Activities -->
+<div class="row g-4">
+  <!-- Recent Bookings Table -->
+  <div class="col-lg-8">
+    <div class="rs-card p-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Recent Coolie Bookings</h5>
+        <a href="{% url 'admin_portal:bookings' %}" class="small text-primary fw-bold text-decoration-none">Manage All</a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small">
+          <thead class="table-light">
+            <tr>
+              <th>ID</th>
+              <th>Passenger</th>
+              <th>Station / Platform</th>
+              <th>Coolie</th>
+              <th>Fare</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in recent_bookings %}
+              <tr>
+                <td class="fw-bold">#{{ b.booking_id }}</td>
+                <td>{{ b.passenger.get_full_name|default:b.passenger.username }}</td>
+                <td>{{ b.station.code }} - Plat {{ b.platform.number|default:'1' }}</td>
+                <td>{{ b.coolie.user.get_full_name|default:'Unassigned' }}</td>
+                <td class="fw-bold text-success">₹{{ b.total_fare }}</td>
+                <td><span class="status-badge badge-rs-{{ b.status|lower }}">{{ b.get_status_display }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Alerts Sidebar -->
+  <div class="col-lg-4">
+    <div class="rs-card p-4">
+      <h5 class="fw-bold text-primary mb-3">Urgent Grievances & Assistance</h5>
+      {% for ast in recent_assistance %}
+        <div class="p-2 border rounded-3 mb-2 small bg-light">
+          <div class="d-flex justify-content-between">
+            <strong class="text-danger">{{ ast.get_assistance_type_display }}</strong>
+            <span class="badge bg-secondary">{{ ast.get_status_display }}</span>
+          </div>
+          <div class="text-muted" style="font-size: 11px;">{{ ast.passenger_name }} &bull; {{ ast.station.code }} (Plat {{ ast.platform.number|default:'1' }})</div>
+        </div>
+      {% endfor %}
+
+      {% for cmp in recent_complaints %}
+        <div class="p-2 border rounded-3 mb-2 small bg-light">
+          <div class="d-flex justify-content-between">
+            <strong class="text-warning text-dark">{{ cmp.get_category_display }}</strong>
+            <span class="badge bg-warning text-dark">{{ cmp.get_status_display }}</span>
+          </div>
+          <div class="text-muted" style="font-size: 11px;">{{ cmp.station.code }} &bull; Priority: {{ cmp.priority }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/js/admin_charts.js"></script>
+{% endblock %}

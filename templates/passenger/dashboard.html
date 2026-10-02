@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Passenger Dashboard — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Welcome Banner -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1">Welcome to RailSaathi, {{ user.first_name|default:user.username }} 👋</h2>
+      <p class="text-muted small mb-0">Your railway companion for smart navigation, verified coolies, and instant station help.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-light text-dark border p-2 px-3 rounded-pill fw-semibold">
+        <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ default_station.name }} ({{ default_station.code }})
+      </span>
+      <a href="{% url 'bookings:book_coolie' %}" class="btn btn-rs-accent">
+        <i class="fas fa-luggage-cart me-1"></i> Book Coolie
+      </a>
+    </div>
+  </div>
+
+  <!-- Active Booking Alert Banner if any -->
+  {% if active_booking %}
+    <div class="rs-card p-4 mb-4 border-primary border-2 shadow-md bg-white">
+      <div class="row align-items-center g-3">
+        <div class="col-md-8">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="status-badge badge-rs-{{ active_booking.status|lower }} text-uppercase">
+              <span class="pulse-dot"></span> {{ active_booking.get_status_display }}
+            </span>
+            <span class="text-muted small">Ref: #{{ active_booking.booking_id }}</span>
+          </div>
+          <h4 class="fw-bold mb-1">Active Coolie Booking</h4>
+          <p class="text-muted small mb-0">
+            <strong>{{ active_booking.station.name }}</strong> &bull; Platform {{ active_booking.platform.number|default:'1' }} &bull; Train: {{ active_booking.train_number }} (Coach {{ active_booking.coach_number|default:'General' }})
+          </p>
+          {% if active_booking.coolie %}
+            <div class="d-flex align-items-center gap-2 mt-2">
+              <span class="small fw-semibold text-primary"><i class="fas fa-user-check me-1"></i> Sahayak: {{ active_booking.coolie.user.get_full_name }} (Badge #{{ active_booking.coolie.badge_number }})</span>
+            </div>
+          {% endif %}
+        </div>
+        <div class="col-md-4 text-md-end">
+          <a href="{% url 'bookings:tracking' active_booking.booking_id %}" class="btn btn-rs-primary btn-accessible-large w-100 w-md-auto">
+            <i class="fas fa-satellite-dish me-2"></i> Track Live Status
+          </a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Quick Services Grid -->
+  <div class="mb-5">
+    <h5 class="fw-bold text-dark mb-3">Quick Station Services</h5>
+    <div class="row g-3">
+      <div class="col-6 col-md-4 col-lg-2">
+        <a href="{% url 'bookings:book_coolie' %}" class="rs-card p-3 text-center text-decoration-none d-block h-100">
+          <div class="service-icon-box mx-auto">🧳</div>
+          <h6 class="fw-bold text-dark mb-0">Book Coolie</h6>
+        </a>
+      </div>
+
+      <div class="col-6 col-md-4 col-lg-2">
+        <a href="{% url 'stations:station_list' %}" class="rs-card p-3 text-center text-decoration-none d-block h-100">
+          <div class="service-icon-box mx-auto">🚉</div>
+          <h6 class="fw-bold text-dark mb-0">Facilities</h6>
+        </a>
+      </div>
+
+      <div class="col-6 col-md-4 col-lg-2">
+        <a href="{% url 'assistance:request' %}" class="rs-card p-3 text-center text-decoration-none d-block h-100">
+          <div class="service-icon-box mx-auto">♿</div>
+          <h6 class="fw-bold text-dark mb-0">Assistance</h6>
+        </a>
+      </div>
+
+      <div class="col-6 col-md-4 col-lg-2">
+        <a href="{% url 'stations:station_list' %}" class="rs-card p-3 text-center text-decoration-none d-block h-100">
+          <div class="service-icon-box mx-auto">🚻</div>
+          <h6 class="fw-bold text-dark mb-0">Facilities</h6>
+        </a>
+      </div>
+
+      <div class="col-6 col-md-4 col-lg-2">
+        <a href="{% url 'lost_found:index' %}" class="rs-card p-3 text-center text-decoration-none d-block h-100">
+          <div class="service-icon-box mx-auto">🔎</div>
+          <h6 class="fw-bold text-dark mb-0">Lost & Found</h6>
+        </a>
+      </div>
+
+      <div class="col-6 col-md-4 col-lg-2">
+        <a href="{% url 'complaints:submit' %}" class="rs-card p-3 text-center text-decoration-none d-block h-100">
+          <div class="service-icon-box mx-auto">📢</div>
+          <h6 class="fw-bold text-dark mb-0">Complaint</h6>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Bookings and Activity -->
+  <div class="row g-4">
+    <!-- Recent Bookings -->
+    <div class="col-lg-8">
+      <div class="rs-card p-4 h-100">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">Your Recent Bookings</h5>
+          <a href="{% url 'bookings:history' %}" class="small text-primary fw-bold text-decoration-none">View All</a>
+        </div>
+
+        {% if recent_bookings %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light small">
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Station</th>
+                  <th>Luggage</th>
+                  <th>Fare</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody class="small">
+                {% for b in recent_bookings %}
+                  <tr>
+                    <td class="fw-bold">#{{ b.booking_id }}</td>
+                    <td>{{ b.station.code }} - Plat {{ b.platform.number|default:'1' }}</td>
+                    <td>{{ b.number_of_bags }} Bags</td>
+                    <td class="fw-bold text-success">₹{{ b.total_fare }}</td>
+                    <td>
+                      <span class="status-badge badge-rs-{{ b.status|lower }}">{{ b.get_status_display }}</span>
+                    </td>
+                    <td>
+                      <a href="{% url 'bookings:tracking' b.booking_id %}" class="btn btn-sm btn-outline-primary py-1 px-2">
+                        Details
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <p class="mb-2">No past bookings found.</p>
+            <a href="{% url 'bookings:book_coolie' %}" class="btn btn-sm btn-rs-primary">Book a Coolie Now</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Active Requests Sidebar -->
+    <div class="col-lg-4">
+      <div class="rs-card p-4 h-100">
+        <h5 class="fw-bold mb-3">Assistance & Grievances</h5>
+
+        {% if my_assistance %}
+          <h6 class="small fw-bold text-muted text-uppercase mb-2">Assistance Requests</h6>
+          {% for ast in my_assistance %}
+            <div class="p-3 bg-light rounded-3 mb-2 small">
+              <div class="d-flex justify-content-between">
+                <strong>{{ ast.get_assistance_type_display }}</strong>
+                <span class="badge bg-secondary">{{ ast.get_status_display }}</span>
+              </div>
+              <div class="text-muted mt-1">Platform {{ ast.platform.number|default:'1' }} &bull; Ref: {{ ast.request_id }}</div>
+              <a href="{% url 'assistance:detail' ast.request_id %}" class="text-primary fw-bold text-decoration-none mt-1 d-inline-block">View Status &rarr;</a>
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        {% if my_complaints %}
+          <h6 class="small fw-bold text-muted text-uppercase mb-2 mt-3">Grievance Tickets</h6>
+          {% for cmp in my_complaints %}
+            <div class="p-3 bg-light rounded-3 mb-2 small">
+              <div class="d-flex justify-content-between">
+                <strong>{{ cmp.get_category_display }}</strong>
+                <span class="badge bg-warning text-dark">{{ cmp.get_status_display }}</span>
+              </div>
+              <div class="text-muted mt-1">{{ cmp.station.name }} &bull; Ref: {{ cmp.ticket_id }}</div>
+              <a href="{% url 'complaints:detail' cmp.ticket_id %}" class="text-primary fw-bold text-decoration-none mt-1 d-inline-block">Track Ticket &rarr;</a>
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        {% if not my_assistance and not my_complaints %}
+          <div class="text-center py-4 text-muted small">
+            <i class="fas fa-check-circle text-success fs-3 mb-2"></i>
+            <p>No open assistance requests or grievances.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

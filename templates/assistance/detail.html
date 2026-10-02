@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Assistance Request #{{ req.request_id }} — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="mb-4">
+        <a href="{% url 'assistance:request' %}" class="text-decoration-none text-muted small"><i class="fas fa-arrow-left me-1"></i> New Request</a>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+          <h2 class="fw-bold mb-0">Assistance Request &bull; #{{ req.request_id }}</h2>
+          <span class="status-badge badge-rs-{{ req.status|lower }} fs-6 px-3 py-1">
+            {{ req.get_status_display }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Success Alert Banner -->
+      <div class="alert alert-success d-flex align-items-center gap-3 p-3 rounded-4 shadow-sm mb-4">
+        <i class="fas fa-check-circle fs-3 text-success"></i>
+        <div>
+          <h6 class="fw-bold mb-0">Request Registered Successfully ✓</h6>
+          <span class="small">Station Sahayata team has been alerted. An attendant is being assigned.</span>
+        </div>
+      </div>
+
+      <!-- Status Progress Timeline -->
+      <div class="rs-card p-4 p-md-5 mb-4">
+        <h5 class="fw-bold text-primary mb-3">Service Progress</h5>
+        <div class="timeline-stepper my-3">
+          <div class="timeline-step {% if req.status == 'PENDING' %}active{% elif req.status in 'ASSIGNED,IN_PROGRESS,RESOLVED' %}completed{% endif %}">
+            <div class="step-icon">{% if req.status in 'ASSIGNED,IN_PROGRESS,RESOLVED' %}<i class="fas fa-check"></i>{% else %}1{% endif %}</div>
+            <div class="step-title">Pending</div>
+          </div>
+          <div class="timeline-step {% if req.status == 'ASSIGNED' %}active{% elif req.status in 'IN_PROGRESS,RESOLVED' %}completed{% endif %}">
+            <div class="step-icon">{% if req.status in 'IN_PROGRESS,RESOLVED' %}<i class="fas fa-check"></i>{% else %}2{% endif %}</div>
+            <div class="step-title">Assigned</div>
+          </div>
+          <div class="timeline-step {% if req.status == 'IN_PROGRESS' %}active{% elif req.status == 'RESOLVED' %}completed{% endif %}">
+            <div class="step-icon">{% if req.status == 'RESOLVED' %}<i class="fas fa-check"></i>{% else %}3{% endif %}</div>
+            <div class="step-title">In Progress</div>
+          </div>
+          <div class="timeline-step {% if req.status == 'RESOLVED' %}completed active{% endif %}">
+            <div class="step-icon">{% if req.status == 'RESOLVED' %}<i class="fas fa-check-double text-success"></i>{% else %}4{% endif %}</div>
+            <div class="step-title">Completed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Assigned Staff & Ticket Details -->
+      <div class="rs-card p-4">
+        <h5 class="fw-bold text-primary mb-3">Request Summary</h5>
+
+        {% if req.assigned_staff_name %}
+          <div class="p-3 bg-primary-subtle rounded-4 mb-4 d-flex justify-content-between align-items-center">
+            <div>
+              <span class="badge bg-primary text-white mb-1">Assigned Station Attendant</span>
+              <h6 class="fw-bold mb-0 text-dark">{{ req.assigned_staff_name }}</h6>
+              {% if req.assigned_staff_phone %}
+                <span class="small text-muted">Phone: {{ req.assigned_staff_phone }}</span>
+              {% endif %}
+            </div>
+            {% if req.assigned_staff_phone %}
+              <a href="tel:{{ req.assigned_staff_phone }}" class="btn btn-primary rounded-pill px-3">
+                <i class="fas fa-phone me-1"></i> Call Attendant
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <div class="row g-3 small text-muted">
+          <div class="col-sm-6"><strong>Category:</strong> {{ req.get_assistance_type_display }}</div>
+          <div class="col-sm-6"><strong>Passenger Name:</strong> {{ req.passenger_name }}</div>
+          <div class="col-sm-6"><strong>Contact Phone:</strong> {{ req.passenger_phone }}</div>
+          <div class="col-sm-6"><strong>Station:</strong> {{ req.station.name }}</div>
+          <div class="col-sm-6"><strong>Platform:</strong> Platform {{ req.platform.number|default:'Auto' }}</div>
+          <div class="col-sm-6"><strong>Train/Coach:</strong> {{ req.train_number|default:'N/A' }} ({{ req.coach_number|default:'N/A' }})</div>
+          <div class="col-12 mt-3">
+            <strong>Description:</strong>
+            <p class="p-3 bg-light rounded-3 mt-1 text-dark mb-0">{{ req.description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

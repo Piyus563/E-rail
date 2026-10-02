@@ -1,0 +1,72 @@
+{% extends 'admin_portal/base_admin.html' %}
+
+{% block admin_content %}
+<div class="mb-4">
+  <h3 class="fw-bold mb-1">Coolies (Sahayaks) Management</h3>
+  <p class="text-muted small">Manage licensed porters, verify badges, view ratings, and toggle station online statuses</p>
+</div>
+
+<div class="rs-card p-4">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 small">
+      <thead class="table-light">
+        <tr>
+          <th>Sahayak Name</th>
+          <th>Badge No.</th>
+          <th>Station Assigned</th>
+          <th>Experience</th>
+          <th>Rating</th>
+          <th>Total Trips</th>
+          <th>Verification</th>
+          <th>Availability</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in coolies %}
+          <tr>
+            <td class="fw-bold">
+              <div class="d-flex align-items-center gap-2">
+                <img src="{{ c.photo_url|default:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&fit=crop&crop=face' }}" class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover;">
+                <div>
+                  <div>{{ c.user.get_full_name|default:c.user.username }}</div>
+                  <span class="text-muted" style="font-size: 11px;">{{ c.user.phone }}</span>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge bg-light text-dark border fw-bold">{{ c.badge_number }}</span></td>
+            <td>{{ c.station.name }}</td>
+            <td>{{ c.experience_years }} Years</td>
+            <td><span class="rating-pill">⭐ {{ c.rating }}</span></td>
+            <td>{{ c.total_bookings_count }}</td>
+            <td>
+              {% if c.is_verified %}
+                <span class="badge bg-success-subtle text-success"><i class="fas fa-check-circle me-1"></i>Verified</span>
+              {% else %}
+                <span class="badge bg-danger-subtle text-danger">Unverified</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if c.is_online %}
+                <span class="badge bg-success"><i class="fas fa-circle small me-1"></i>Online</span>
+              {% else %}
+                <span class="badge bg-secondary">Offline</span>
+              {% endif %}
+            </td>
+            <td>
+              <form method="post" action="{% url 'admin_portal:coolies' %}" class="d-inline-block">
+                {% csrf_token %}
+                <input type="hidden" name="coolie_id" value="{{ c.id }}">
+                <input type="hidden" name="action" value="toggle_online">
+                <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" title="Toggle Online Status">
+                  Toggle Status
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

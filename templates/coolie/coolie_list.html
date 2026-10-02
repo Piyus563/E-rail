@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Verified Coolies — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1">🧳 Station Coolie Directory</h2>
+      <p class="text-muted small mb-0">Browse licensed railway porters (Sahayaks) with ratings, experience, and live availability.</p>
+    </div>
+
+    <!-- Station Filter Form -->
+    <form method="get" action="{% url 'coolies:coolie_list' %}" class="d-flex gap-2">
+      <select name="station" class="form-select rounded-pill" onchange="this.form.submit()">
+        <option value="">All Stations</option>
+        {% for stn in stations %}
+          <option value="{{ stn.code }}" {% if selected_station == stn.code %}selected{% endif %}>{{ stn.name }} ({{ stn.code }})</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  <div class="row g-4">
+    {% if coolies %}
+      {% for coolie in coolies %}
+        <div class="col-md-6 col-lg-4">
+          <div class="coolie-card h-100 d-flex flex-column">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div class="position-relative">
+                <img src="{{ coolie.photo_url|default:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&fit=crop&crop=face' }}" alt="{{ coolie.user.get_full_name }}" class="coolie-avatar">
+                {% if coolie.is_online %}
+                  <span class="position-absolute bottom-0 end-0 p-2 bg-success border border-2 border-white rounded-circle" title="Online"></span>
+                {% else %}
+                  <span class="position-absolute bottom-0 end-0 p-2 bg-secondary border border-2 border-white rounded-circle" title="Offline"></span>
+                {% endif %}
+              </div>
+              <div>
+                <h5 class="fw-bold mb-0">
+                  {{ coolie.user.get_full_name|default:coolie.user.username }}
+                  <i class="fas fa-check-circle verified-badge ms-1" title="Railway Verified"></i>
+                </h5>
+                <span class="badge bg-light text-dark border mt-1">Badge #{{ coolie.badge_number }}</span>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded-3">
+              <span class="rating-pill">⭐ {{ coolie.rating }}</span>
+              <span class="small text-muted">{{ coolie.total_ratings_count }} Verified Reviews</span>
+              <span class="small fw-semibold text-primary">{{ coolie.experience_years }} Yrs Exp</span>
+            </div>
+
+            <div class="small text-muted mb-4 flex-grow-1">
+              <div><i class="fas fa-map-marker-alt me-1 text-danger"></i> <strong>Station:</strong> {{ coolie.station.name }}</div>
+              <div><i class="fas fa-tasks me-1 text-primary"></i> <strong>Total Trips:</strong> {{ coolie.total_bookings_count }} completed</div>
+              <div>
+                <i class="fas fa-circle me-1 small {% if coolie.is_online %}text-success{% else %}text-muted{% endif %}"></i>
+                <strong>Status:</strong> {% if coolie.is_online %}<span class="text-success fw-bold">Available Now</span>{% else %}<span class="text-muted">Currently Offline</span>{% endif %}
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <a href="{% url 'coolies:coolie_detail' coolie.id %}" class="btn btn-rs-outline w-50">
+                View Profile
+              </a>
+              <a href="{% url 'bookings:book_coolie' %}?coolie_id={{ coolie.id }}&station={{ coolie.station.code }}" class="btn btn-rs-primary w-50">
+                Book Now
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="col-12 text-center py-5">
+        <i class="fas fa-user-slash fs-1 text-muted mb-3"></i>
+        <h5>No Coolies Found for Selected Criteria</h5>
+        <p class="text-muted small">Please select another station or view all stations.</p>
+        <a href="{% url 'coolies:coolie_list' %}" class="btn btn-rs-outline">Reset Filter</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

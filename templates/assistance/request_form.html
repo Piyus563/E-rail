@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Request Passenger Assistance — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="mb-4 text-center">
+        <h2 class="fw-bold mb-1">♿ Passenger Assistance Service</h2>
+        <p class="text-muted small">Specialized on-ground assistance for senior citizens, wheelchair-bound passengers, families, and medical emergencies.</p>
+      </div>
+
+      <div class="rs-card p-4 p-md-5 shadow-lg">
+        <form method="post" action="{% url 'assistance:request' %}">
+          {% csrf_token %}
+
+          <!-- Service Type Picker -->
+          <div class="mb-4">
+            <label class="form-label fw-bold text-dark mb-3">Select Assistance Category *</label>
+            <div class="row g-2">
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="assistance_type" id="astWheelchair" value="WHEELCHAIR" checked>
+                <label class="btn btn-outline-primary text-start p-3 w-100 rounded-4" for="astWheelchair">
+                  <div class="fw-bold fs-6">♿ Wheelchair Assistance</div>
+                  <div class="text-muted" style="font-size: 11px;">Dedicated wheelchair attendant from coach to exit</div>
+                </label>
+              </div>
+
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="assistance_type" id="astSenior" value="SENIOR_CITIZEN">
+                <label class="btn btn-outline-primary text-start p-3 w-100 rounded-4" for="astSenior">
+                  <div class="fw-bold fs-6">👴 Senior Citizen Aid</div>
+                  <div class="text-muted" style="font-size: 11px;">Guidance across platforms, escalators, and stairs</div>
+                </label>
+              </div>
+
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="assistance_type" id="astFamily" value="FAMILY_CHILD">
+                <label class="btn btn-outline-primary text-start p-3 w-100 rounded-4" for="astFamily">
+                  <div class="fw-bold fs-6">👨‍👩‍👧 Family & Child Care</div>
+                  <div class="text-muted" style="font-size: 11px;">Pram help, feeding room directions, crowd escort</div>
+                </label>
+              </div>
+
+              <div class="col-md-6">
+                <input type="radio" class="btn-check" name="assistance_type" id="astMedical" value="MEDICAL_EMERGENCY">
+                <label class="btn btn-outline-danger text-start p-3 w-100 rounded-4" for="astMedical">
+                  <div class="fw-bold fs-6 text-danger">🏥 Medical First Aid</div>
+                  <div class="text-muted" style="font-size: 11px;">Doctor on call, stretcher, basic medical post</div>
+                </label>
+              </div>
+
+              <div class="col-12">
+                <input type="radio" class="btn-check" name="assistance_type" id="astGeneral" value="GENERAL_HELP">
+                <label class="btn btn-outline-secondary text-start p-2 px-3 w-100 rounded-3" for="astGeneral">
+                  <span class="fw-bold">🙋 General Station Guidance & Help</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Passenger Details -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Passenger Full Name *</label>
+              <input type="text" name="passenger_name" value="{{ user.get_full_name|default:'' }}" class="form-control" placeholder="e.g. Mrs. Sunita Roy" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Contact Mobile Number *</label>
+              <input type="tel" name="passenger_phone" value="{{ user.phone|default:'' }}" class="form-control" placeholder="+91 9876543210" required>
+            </div>
+          </div>
+
+          <!-- Station & Platform Location -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Station *</label>
+              <select name="station_id" class="form-select" required>
+                {% for stn in stations %}
+                  <option value="{{ stn.id }}" {% if default_station.id == stn.id %}selected{% endif %}>
+                    {{ stn.name }} ({{ stn.code }})
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Platform Number (If Known)</label>
+              <select name="platform_id" class="form-select">
+                <option value="">Auto-Assign by Train Schedule</option>
+                {% for plat in platforms %}
+                  <option value="{{ plat.id }}">Platform {{ plat.number }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Train Number / Name (Optional)</label>
+              <input type="text" name="train_number" class="form-control" placeholder="e.g. 12377 Padatik Express">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Coach & Berth (Optional)</label>
+              <input type="text" name="coach_number" class="form-control" placeholder="e.g. Coach S3 Berth 21">
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold small">Describe Assistance Needed *</label>
+            <textarea name="description" rows="3" class="form-control" placeholder="Explain passenger mobility condition or special instructions (e.g. passenger cannot walk stairs, need wheelchair waiting at coach door on arrival)" required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-rs-primary btn-accessible-large w-100 fw-bold">
+            <i class="fas fa-paper-plane me-2"></i> Submit Assistance Request
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

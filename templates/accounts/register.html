@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="rs-card p-4 p-md-5 shadow-lg">
+        <div class="text-center mb-4">
+          <div class="brand-logo justify-content-center fs-2 mb-2">
+            <span>🚆</span>
+            <span>Rail<span style="color: var(--rs-blue-accent);">Saathi</span></span>
+          </div>
+          <h4 class="fw-bold text-dark">Create Your Account</h4>
+          <p class="text-muted small">Join India's railway station assistance network</p>
+        </div>
+
+        <form method="post" action="{% url 'accounts:register' %}">
+          {% csrf_token %}
+
+          <!-- Role Selection -->
+          <div class="mb-4">
+            <label class="form-label fw-bold small text-muted text-uppercase">I want to register as:</label>
+            <div class="row g-2">
+              <div class="col-6">
+                <input type="radio" class="btn-check" name="role" id="rolePassenger" value="PASSENGER" checked autocomplete="off" onchange="toggleCoolieFields(false)">
+                <label class="btn btn-outline-primary w-100 py-3 rounded-4 d-flex flex-column align-items-center gap-1" for="rolePassenger">
+                  <i class="fas fa-user fs-4"></i>
+                  <span class="fw-bold">Passenger</span>
+                </label>
+              </div>
+              <div class="col-6">
+                <input type="radio" class="btn-check" name="role" id="roleCoolie" value="COOLIE" autocomplete="off" onchange="toggleCoolieFields(true)">
+                <label class="btn btn-outline-primary w-100 py-3 rounded-4 d-flex flex-column align-items-center gap-1" for="roleCoolie">
+                  <i class="fas fa-luggage-cart fs-4"></i>
+                  <span class="fw-bold">Coolie / Sahayak</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold small">First Name</label>
+              <input type="text" name="first_name" class="form-control" placeholder="e.g. Rahul" required>
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label fw-semibold small">Last Name</label>
+              <input type="text" name="last_name" class="form-control" placeholder="e.g. Sharma">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Email Address</label>
+            <input type="email" name="email" class="form-control" placeholder="name@example.com" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Phone Number</label>
+            <input type="tel" name="phone" class="form-control" placeholder="+91 9876543210" required>
+          </div>
+
+          <!-- Dynamic Coolie Fields -->
+          <div id="coolieFields" style="display: none;" class="p-3 bg-light rounded-4 mb-3 border">
+            <h6 class="fw-bold text-primary mb-2"><i class="fas fa-id-badge me-1"></i> Sahayak License Details</h6>
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Station Assigned</label>
+              <select name="station" class="form-select">
+                {% for stn in stations %}
+                  <option value="{{ stn.id }}">{{ stn.name }} ({{ stn.code }})</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Railway Licensed Badge Number</label>
+              <input type="text" name="badge_number" class="form-control" placeholder="e.g. NJP-C-180">
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold small">Create Password</label>
+            <input type="password" name="password" class="form-control" placeholder="At least 6 characters" required>
+          </div>
+
+          <button type="submit" class="btn btn-rs-primary w-100 btn-accessible-large mb-3">
+            <i class="fas fa-check-circle me-1"></i> Register Account
+          </button>
+        </form>
+
+        <div class="text-center text-muted small mt-3">
+          Already have an account? <a href="{% url 'accounts:login' %}" class="fw-bold text-primary text-decoration-none">Sign In</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleCoolieFields(isCoolie) {
+    const fields = document.getElementById('coolieFields');
+    if (fields) {
+      fields.style.display = isCoolie ? 'block' : 'none';
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'admin_portal/base_admin.html' %}
+
+{% block admin_content %}
+<div class="mb-4">
+  <h3 class="fw-bold mb-1">Stations & Infrastructure</h3>
+  <p class="text-muted small">Manage station hubs, platforms, and track operational facilities</p>
+</div>
+
+<div class="row g-4">
+  {% for stn in stations %}
+    <div class="col-md-6">
+      <div class="rs-card p-4 h-100">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <span class="badge bg-primary fs-6 mb-1">{{ stn.code }}</span>
+            <h4 class="fw-bold text-dark mb-0">{{ stn.name }}</h4>
+            <p class="text-muted small mb-0">{{ stn.city }}, {{ stn.state }}</p>
+          </div>
+          <span class="badge bg-light text-dark border">{{ stn.number_of_platforms }} Platforms</span>
+        </div>
+
+        <div class="row g-2 mb-3 text-center small">
+          <div class="col-4">
+            <div class="p-2 bg-light rounded-3">
+              <strong class="d-block text-primary fs-5">{{ stn.facilities.count }}</strong>
+              <span class="text-muted" style="font-size: 11px;">Facilities</span>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="p-2 bg-light rounded-3">
+              <strong class="d-block text-success fs-5">{{ stn.coolies.count }}</strong>
+              <span class="text-muted" style="font-size: 11px;">Coolies</span>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="p-2 bg-light rounded-3">
+              <strong class="d-block text-info fs-5">{{ stn.bookings.count }}</strong>
+              <span class="text-muted" style="font-size: 11px;">Bookings</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <a href="{% url 'stations:station_detail' stn.code %}" class="btn btn-sm btn-rs-primary w-100">View Details</a>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

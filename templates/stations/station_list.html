@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Station Facilities & Directory — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <h2 class="fw-bold mb-1">🚉 Railway Stations & Facilities</h2>
+      <p class="text-muted small mb-0">Explore stations, available amenities, and platform details for a smoother travel experience.</p>
+    </div>
+
+    <!-- Search Form -->
+    <form method="get" action="{% url 'stations:station_list' %}" class="d-flex gap-2">
+      <input type="text" name="q" value="{{ query }}" class="form-control rounded-pill" placeholder="Search by name, code, city..." style="width: 260px;">
+      <button type="submit" class="btn btn-rs-primary rounded-pill px-3"><i class="fas fa-search"></i></button>
+    </form>
+  </div>
+
+  <div class="row g-4">
+    {% for station in stations %}
+      <div class="col-md-6 col-lg-6">
+        <div class="rs-card p-4 h-100 d-flex flex-column">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+              <span class="badge bg-primary text-white fw-bold px-3 py-1 rounded-pill mb-2">{{ station.code }}</span>
+              <h4 class="fw-bold text-dark mb-1">{{ station.name }}</h4>
+              <p class="text-muted small mb-0"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ station.city }}, {{ station.state }}</p>
+            </div>
+            <div class="badge bg-light text-dark border px-3 py-2 rounded-3">
+              <strong>{{ station.number_of_platforms }}</strong> Platforms
+            </div>
+          </div>
+
+          <!-- Facility Badges Summary -->
+          <div class="mb-4 flex-grow-1">
+            <h6 class="small fw-bold text-muted text-uppercase mb-2">Available Key Facilities:</h6>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="badge bg-light text-dark border"><i class="fas fa-restroom text-primary me-1"></i> Washrooms</span>
+              <span class="badge bg-light text-dark border"><i class="fas fa-tint text-info me-1"></i> RO Cold Water</span>
+              <span class="badge bg-light text-dark border"><i class="fas fa-elevator text-success me-1"></i> Lifts & Escalators</span>
+              <span class="badge bg-light text-dark border"><i class="fas fa-wheelchair text-primary me-1"></i> Wheelchair Access</span>
+              <span class="badge bg-light text-dark border"><i class="fas fa-utensils text-warning me-1"></i> Food Court</span>
+              <span class="badge bg-light text-dark border"><i class="fas fa-couch text-secondary me-1"></i> AC Lounge</span>
+              <span class="badge bg-light text-dark border"><i class="fas fa-ambulance text-danger me-1"></i> 24x7 Medical</span>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <a href="{% url 'stations:station_detail' station.code %}" class="btn btn-rs-primary w-100">
+              <i class="fas fa-info-circle me-1"></i> View Details
+            </a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12 text-center py-5">
+        <i class="fas fa-train fs-1 text-muted mb-3"></i>
+        <h5>No Stations Found Matching "{{ query }}"</h5>
+        <a href="{% url 'stations:station_list' %}" class="btn btn-rs-outline mt-2">View All Stations</a>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

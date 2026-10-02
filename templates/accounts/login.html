@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Login — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="rs-card p-4 p-md-5 shadow-lg">
+        <div class="text-center mb-4">
+          <div class="brand-logo justify-content-center fs-2 mb-2">
+            <span>🚆</span>
+            <span>Rail<span style="color: var(--rs-blue-accent);">Saathi</span></span>
+          </div>
+          <h4 class="fw-bold text-dark">Welcome Back</h4>
+          <p class="text-muted small">Sign in to your passenger, coolie, or station admin account</p>
+        </div>
+
+        <form method="post" action="{% url 'accounts:login' %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Username or Email</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0"><i class="fas fa-user text-muted"></i></span>
+              <input type="text" name="username_or_email" class="form-control border-start-0" placeholder="e.g. passenger@railsaathi.com" required autofocus>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold small d-flex justify-content-between">
+              <span>Password</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0"><i class="fas fa-lock text-muted"></i></span>
+              <input type="password" name="password" class="form-control border-start-0" placeholder="Enter your password" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-rs-primary w-100 btn-accessible-large mb-3">
+            <i class="fas fa-sign-in-alt me-1"></i> Sign In to Account
+          </button>
+        </form>
+
+        <div class="text-center text-muted small mt-3">
+          Don't have an account? <a href="{% url 'accounts:register' %}" class="fw-bold text-primary text-decoration-none">Sign Up Here</a>
+        </div>
+
+        <!-- Demo Accounts Helper Accordion -->
+        <div class="mt-4 pt-3 border-top">
+          <button class="btn btn-sm btn-outline-secondary w-100 rounded-3 text-start d-flex justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#demoAccounts">
+            <span><i class="fas fa-key me-1 text-warning"></i> Quick Demo Test Credentials</span>
+            <i class="fas fa-chevron-down small"></i>
+          </button>
+          <div class="collapse mt-2" id="demoAccounts">
+            <div class="bg-light p-3 rounded-3 small">
+              <div class="mb-2"><strong>👤 Passenger:</strong> <code>passenger@railsaathi.com</code> / <code>pass123</code></div>
+              <div class="mb-2"><strong>🧑‍💼 Coolie:</strong> <code>ramesh@railsaathi.com</code> / <code>coolie123</code></div>
+              <div><strong>🛡️ Admin:</strong> <code>admin@railsaathi.com</code> / <code>admin123</code></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

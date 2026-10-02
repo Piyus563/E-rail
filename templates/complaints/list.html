@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}My Complaints — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">📢 Your Grievances</h3>
+      <p class="text-muted small mb-0">Track all your registered railway complaint tickets and resolutions</p>
+    </div>
+    <a href="{% url 'complaints:submit' %}" class="btn btn-rs-primary">
+      <i class="fas fa-plus me-1"></i> Lodge New Complaint
+    </a>
+  </div>
+
+  <div class="rs-card p-4">
+    {% if complaints %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light small">
+            <tr>
+              <th>Ticket ID</th>
+              <th>Category</th>
+              <th>Station</th>
+              <th>Priority</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody class="small">
+            {% for c in complaints %}
+              <tr>
+                <td class="fw-bold">#{{ c.ticket_id }}</td>
+                <td>{{ c.get_category_display }}</td>
+                <td>{{ c.station.code }}</td>
+                <td><span class="badge bg-light text-dark border">{{ c.get_priority_display }}</span></td>
+                <td>{{ c.created_at|date:"d M Y" }}</td>
+                <td><span class="status-badge badge-rs-{{ c.status|lower }}">{{ c.get_status_display }}</span></td>
+                <td>
+                  <a href="{% url 'complaints:detail' c.ticket_id %}" class="btn btn-sm btn-rs-outline py-1 px-3">
+                    Track
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="fas fa-bullhorn fs-1 text-secondary mb-2"></i>
+        <h5>No Complaints Filed</h5>
+        <a href="{% url 'complaints:submit' %}" class="btn btn-rs-primary mt-2">Submit Feedback or Grievance</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

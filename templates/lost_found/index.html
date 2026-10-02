@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}Lost & Found Hub — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Header -->
+  <div class="text-center mb-4">
+    <h2 class="fw-bold mb-1">🔎 Station Lost & Found Hub</h2>
+    <p class="text-muted small" style="max-width: 600px; margin: 0 auto;">
+      Report items lost or found at railway platforms, coaches, or waiting rooms. Station RPF and authorities will verify and assist in recovery.
+    </p>
+  </div>
+
+  <!-- Dual Action Cards / Tabs -->
+  <div class="row g-4 mb-5 justify-content-center">
+    <!-- Tab 1: I Lost Something Form -->
+    <div class="col-lg-6">
+      <div class="rs-card p-4 h-100 border-danger border-opacity-50">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <div class="p-2 bg-danger-subtle text-danger rounded-circle"><i class="fas fa-search-minus fs-5"></i></div>
+          <h4 class="fw-bold mb-0 text-danger">I Lost Something</h4>
+        </div>
+        <p class="small text-muted mb-3">Submit details of your missing belongings to trigger an alert to station security.</p>
+
+        <form method="post" action="{% url 'lost_found:index' %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="report_type" value="LOST">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Item Name *</label>
+            <input type="text" name="item_name" class="form-control" placeholder="e.g. Black Dell Laptop Bag / Brown Leather Wallet" required>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Category *</label>
+              <select name="category" class="form-select">
+                {% for cat_key, cat_name in categories %}
+                  <option value="{{ cat_key }}">{{ cat_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Station *</label>
+              <select name="station_id" class="form-select" required>
+                {% for stn in stations %}
+                  <option value="{{ stn.id }}">{{ stn.name }} ({{ stn.code }})</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Platform / Coach Area</label>
+              <input type="text" name="coach_number" class="form-control" placeholder="e.g. Platform 2 / Coach S4">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Photo of Item (Optional)</label>
+              <input type="file" name="image" class="form-control" accept="image/*">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Item Description & Unique Identification Marks *</label>
+            <textarea name="description" rows="2" class="form-control" placeholder="Describe color, brand, stickers, keychains, or contents" required></textarea>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Your Name *</label>
+              <input type="text" name="contact_name" value="{{ user.get_full_name|default:'' }}" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Contact Mobile *</label>
+              <input type="tel" name="contact_phone" value="{{ user.phone|default:'' }}" class="form-control" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-danger w-100 fw-bold py-2 rounded-3">
+            <i class="fas fa-bullhorn me-1"></i> Register Lost Item Report
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tab 2: I Found Something Form -->
+    <div class="col-lg-6">
+      <div class="rs-card p-4 h-100 border-success border-opacity-50">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <div class="p-2 bg-success-subtle text-success rounded-circle"><i class="fas fa-hand-holding-heart fs-5"></i></div>
+          <h4 class="fw-bold mb-0 text-success">I Found Something</h4>
+        </div>
+        <p class="small text-muted mb-3">Hand over found items at the station or report them here to help reunite with the rightful owner.</p>
+
+        <form method="post" action="{% url 'lost_found:index' %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="report_type" value="FOUND">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Found Item Name *</label>
+            <input type="text" name="item_name" class="form-control" placeholder="e.g. Titan Wristwatch / Child Blue Backpack" required>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Category *</label>
+              <select name="category" class="form-select">
+                {% for cat_key, cat_name in categories %}
+                  <option value="{{ cat_key }}">{{ cat_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Station Located *</label>
+              <select name="station_id" class="form-select" required>
+                {% for stn in stations %}
+                  <option value="{{ stn.id }}">{{ stn.name }} ({{ stn.code }})</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Location Found (Platform/Lounge)</label>
+              <input type="text" name="coach_number" class="form-control" placeholder="e.g. Platform 1 AC Waiting Room">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Item Photo (Optional)</label>
+              <input type="file" name="image" class="form-control" accept="image/*">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Description</label>
+            <textarea name="description" rows="2" class="form-control" placeholder="Describe where it was found and current handover custody location" required></textarea>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Your Name / Station Officer *</label>
+              <input type="text" name="contact_name" value="{{ user.get_full_name|default:'' }}" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Contact Number *</label>
+              <input type="tel" name="contact_phone" value="{{ user.phone|default:'' }}" class="form-control" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-success w-100 fw-bold py-2 rounded-3">
+            <i class="fas fa-check-circle me-1"></i> Submit Found Item Report
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Public Listings Gallery -->
+  <div class="rs-card p-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+      <h4 class="fw-bold mb-0">Public Lost & Found Notice Board</h4>
+      <form method="get" action="{% url 'lost_found:index' %}" class="d-flex gap-2">
+        <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
+          <option value="">All Types (Lost & Found)</option>
+          <option value="LOST" {% if filter_type == 'LOST' %}selected{% endif %}>❌ Lost Items</option>
+          <option value="FOUND" {% if filter_type == 'FOUND' %}selected{% endif %}>✅ Found Items</option>
+        </select>
+        <input type="text" name="q" value="{{ query }}" placeholder="Search items..." class="form-control form-control-sm">
+        <button type="submit" class="btn btn-sm btn-primary">Search</button>
+      </form>
+    </div>
+
+    <div class="row g-3">
+      {% for item in reports %}
+        <div class="col-md-6 col-lg-4">
+          <div class="p-3 border rounded-4 bg-light h-100 d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <span class="badge {% if item.report_type == 'LOST' %}bg-danger-subtle text-danger{% else %}bg-success-subtle text-success{% endif %} fw-bold px-2 py-1">
+                {{ item.get_report_type_display }}
+              </span>
+              <span class="text-muted" style="font-size: 11px;">#{{ item.report_id }}</span>
+            </div>
+
+            <h6 class="fw-bold text-dark mb-1">{{ item.item_name }}</h6>
+            <p class="small text-muted mb-2 flex-grow-1">{{ item.description|truncatewords:15 }}</p>
+
+            <div class="small text-muted mb-3">
+              <div><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ item.station.name }}</div>
+              <div><i class="fas fa-calendar-alt me-1"></i> {{ item.created_at|date:"d M Y" }}</div>
+              <div><strong>Status:</strong> <span class="badge bg-secondary">{{ item.get_status_display }}</span></div>
+            </div>
+
+            <a href="{% url 'lost_found:detail' item.report_id %}" class="btn btn-sm btn-rs-outline w-100">
+              View Details / Claim
+            </a>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-12 text-center py-4 text-muted">
+          <p>No reports currently active.</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

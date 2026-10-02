@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block title %}Track Booking #{{ booking.booking_id }} — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div>
+      <a href="{% url 'accounts:passenger_dashboard' %}" class="text-decoration-none text-muted small"><i class="fas fa-arrow-left me-1"></i> Back to Dashboard</a>
+      <h2 class="fw-bold mt-2">Live Booking Status &bull; #{{ booking.booking_id }}</h2>
+      <p class="text-muted small mb-0">Real-time status updates for your station porter assistance.</p>
+    </div>
+
+    <div>
+      <span class="status-badge badge-rs-{{ booking.status|lower }} fs-6 px-3 py-2">
+        {% if booking.status != 'COMPLETED' and booking.status != 'CANCELLED' %}<span class="pulse-dot"></span>{% endif %}
+        {{ booking.get_status_display }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Visual Timeline Stepper -->
+  <div class="rs-card p-4 p-md-5 mb-4">
+    <div class="timeline-stepper">
+      <!-- Step 1: Requested -->
+      <div class="timeline-step {% if booking.status == 'REQUESTED' %}active{% elif booking.status in 'ACCEPTED,SERVICE_STARTED,COMPLETED' %}completed{% endif %}">
+        <div class="step-icon">
+          {% if booking.status in 'ACCEPTED,SERVICE_STARTED,COMPLETED' %}<i class="fas fa-check"></i>{% else %}1{% endif %}
+        </div>
+        <div class="step-title">Requested</div>
+        <div class="small text-muted">{{ booking.created_at|date:"h:i A" }}</div>
+      </div>
+
+      <!-- Step 2: Accepted -->
+      <div class="timeline-step {% if booking.status == 'ACCEPTED' %}active{% elif booking.status in 'SERVICE_STARTED,COMPLETED' %}completed{% endif %}">
+        <div class="step-icon">
+          {% if booking.status in 'SERVICE_STARTED,COMPLETED' %}<i class="fas fa-check"></i>{% else %}2{% endif %}
+        </div>
+        <div class="step-title">Accepted</div>
+        <div class="small text-muted">{% if booking.accepted_at %}{{ booking.accepted_at|date:"h:i A" }}{% else %}Waiting Coolie{% endif %}</div>
+      </div>
+
+      <!-- Step 3: Service Started -->
+      <div class="timeline-step {% if booking.status == 'SERVICE_STARTED' %}active{% elif booking.status == 'COMPLETED' %}completed{% endif %}">
+        <div class="step-icon">
+          {% if booking.status == 'COMPLETED' %}<i class="fas fa-check"></i>{% else %}3{% endif %}
+        </div>
+        <div class="step-title">Service Started</div>
+        <div class="small text-muted">{% if booking.started_at %}{{ booking.started_at|date:"h:i A" }}{% else %}Coolie Reaching{% endif %}</div>
+      </div>
+
+      <!-- Step 4: Completed -->
+      <div class="timeline-step {% if booking.status == 'COMPLETED' %}completed active{% endif %}">
+        <div class="step-icon">
+          {% if booking.status == 'COMPLETED' %}<i class="fas fa-star text-warning"></i>{% else %}4{% endif %}
+        </div>
+        <div class="step-title">Completed</div>
+        <div class="small text-muted">{% if booking.completed_at %}{{ booking.completed_at|date:"h:i A" }}{% else %}Pending{% endif %}</div>
+      </div>
+    </div>
+
+    {% if booking.status == 'CANCELLED' %}
+      <div class="alert alert-danger mt-3 mb-0 rounded-4">
+        <h6 class="fw-bold"><i class="fas fa-times-circle me-1"></i> Booking Cancelled</h6>
+        <p class="small mb-0">Reason: {{ booking.cancellation_reason|default:'Cancelled by passenger' }}</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Coolie Info & Meeting Point -->
+    <div class="col-lg-6">
+      <div class="rs-card p-4 h-100">
+        <h5 class="fw-bold text-primary mb-3"><i class="fas fa-id-card me-2"></i> Assigned Sahayak (Coolie)</h5>
+
+        {% if booking.coolie %}
+          <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-4 mb-3">
+            <img src="{{ booking.coolie.photo_url|default:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&fit=crop&crop=face' }}" class="coolie-avatar" alt="{{ booking.coolie.user.get_full_name }}">
+            <div class="flex-grow-1">
+              <h5 class="fw-bold mb-0">
+                {{ booking.coolie.user.get_full_name|default:booking.coolie.user.username }}
+                <i class="fas fa-check-circle verified-badge ms-1" title="Railway Verified"></i>
+              </h5>
+              <div class="text-muted small">Badge #{{ booking.coolie.badge_number }} &bull; {{ booking.coolie.experience_years }} Yrs Exp</div>
+              <div class="rating-pill mt-1">⭐ {{ booking.coolie.rating }} / 5.0</div>
+            </div>
+            {% if booking.coolie.user.phone %}
+              <a href="tel:{{ booking.coolie.user.phone }}" class="btn btn-success rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px;" title="Call Sahayak">
+                <i class="fas fa-phone-alt"></i>
+              </a>
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="p-3 bg-light rounded-4 text-center text-muted mb-3">
+            <i class="fas fa-spinner fa-spin me-1"></i> Searching for nearest online coolie...
+          </div>
+        {% endif %}
+
+        <div class="p-3 bg-light rounded-4">
+          <h6 class="fw-bold text-dark mb-2"><i class="fas fa-map-marker-alt text-danger me-1"></i> Meeting Point Details</h6>
+          <p class="small text-muted mb-2"><strong>Location:</strong> {{ booking.meeting_point }}</p>
+          <p class="small text-muted mb-2"><strong>Platform:</strong> Platform {{ booking.platform.number|default:'1' }}</p>
+          <p class="small text-muted mb-0"><strong>Train / Coach:</strong> {{ booking.train_number }} {% if booking.coach_number %}(Coach {{ booking.coach_number }}, Seat {{ booking.seat_number|default:'N/A' }}){% endif %}</p>
+        </div>
+
+        <!-- Cancel Option if still in requested or accepted -->
+        {% if booking.status == 'REQUESTED' or booking.status == 'ACCEPTED' %}
+          <hr class="my-4">
+          <button type="button" class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#cancelModal">
+            <i class="fas fa-times-circle me-1"></i> Cancel Booking
+          </button>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Column: Fare Breakdown or Rating Form if Completed -->
+    <div class="col-lg-6">
+      <div class="rs-card p-4 h-100">
+        <h5 class="fw-bold text-primary mb-3"><i class="fas fa-receipt me-2"></i> Luggage & Fare Details</h5>
+
+        <div class="p-3 bg-light rounded-4 mb-4">
+          <div class="d-flex justify-content-between mb-2 small">
+            <span>Luggage Type:</span>
+            <span class="fw-bold">{{ booking.get_luggage_type_display }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2 small">
+            <span>Number of Bags:</span>
+            <span class="fw-bold">{{ booking.number_of_bags }} Bags (~{{ booking.approx_weight_kg }} kg)</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2 small">
+            <span>Base Fare:</span>
+            <span class="fw-bold">₹{{ booking.base_fare }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2 small">
+            <span>Extra Luggage Charge:</span>
+            <span class="fw-bold">₹{{ booking.extra_bag_fare }}</span>
+          </div>
+          <hr class="my-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-dark fs-5">Total Cash/UPI to Pay:</span>
+            <span class="fw-bold text-success fs-3">₹{{ booking.total_fare }}</span>
+          </div>
+        </div>
+
+        <!-- Rate Coolie Section (Visible when COMPLETED) -->
+        {% if booking.status == 'COMPLETED' %}
+          <div class="p-4 bg-primary-subtle rounded-4 border border-primary border-opacity-25 mt-3">
+            <h5 class="fw-bold text-primary mb-2 text-center">⭐ Rate Your Coolie Experience</h5>
+            <p class="text-muted small text-center mb-3">Help maintain quality service at the railway station.</p>
+
+            {% if existing_review %}
+              <div class="p-3 bg-white rounded-3 text-center">
+                <div class="text-warning fs-4 mb-1">
+                  {% for i in "12345"|make_list %}
+                    {% if forloop.counter <= existing_review.rating %}★{% else %}&#9734;{% endif %}
+                  {% endfor %}
+                </div>
+                <p class="small text-muted mb-0">"{{ existing_review.comment|default:'Rated 5 stars' }}"</p>
+                <span class="badge bg-success mt-2">Feedback Recorded ✓</span>
+              </div>
+            {% else %}
+              <form method="post" action="{% url 'bookings:tracking' booking.booking_id %}">
+                {% csrf_token %}
+                <input type="hidden" name="submit_review" value="1">
+
+                <div class="star-rating mb-3">
+                  <input type="radio" id="star5" name="rating" value="5" checked><label for="star5" title="5 stars">★</label>
+                  <input type="radio" id="star4" name="rating" value="4"><label for="star4" title="4 stars">★</label>
+                  <input type="radio" id="star3" name="rating" value="3"><label for="star3" title="3 stars">★</label>
+                  <input type="radio" id="star2" name="rating" value="2"><label for="star2" title="2 stars">★</label>
+                  <input type="radio" id="star1" name="rating" value="1"><label for="star1" title="1 star">★</label>
+                </div>
+
+                <div class="mb-3">
+                  <textarea name="comment" rows="3" class="form-control" placeholder="How was the coolie's behavior and punctuality? Write a quick review..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-rs-primary w-100 fw-bold">
+                  <i class="fas fa-paper-plane me-1"></i> Submit Star Rating & Review
+                </button>
+              </form>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel Confirmation Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow-lg">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold text-danger"><i class="fas fa-exclamation-triangle me-1"></i> Cancel Coolie Booking?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{% url 'bookings:tracking' booking.booking_id %}">
+        {% csrf_token %}
+        <input type="hidden" name="cancel_booking" value="1">
+        <div class="modal-body py-3">
+          <p class="small text-muted">Are you sure you want to cancel booking #{{ booking.booking_id }}? The assigned coolie will be notified.</p>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Reason for cancellation</label>
+            <select name="cancellation_reason" class="form-select">
+              <option value="Train delayed / reschedule">Train delayed / reschedule</option>
+              <option value="Luggage already handled">Luggage already handled</option>
+              <option value="Booked by mistake">Booked by mistake</option>
+              <option value="Other reason">Other reason</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Keep Booking</button>
+          <button type="submit" class="btn btn-danger">Confirm Cancellation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

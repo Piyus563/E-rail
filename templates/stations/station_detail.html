@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ station.name }} ({{ station.code }}) — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="mb-4">
+    <a href="{% url 'stations:station_list' %}" class="text-decoration-none text-muted small"><i class="fas fa-arrow-left me-1"></i> Back to Stations</a>
+    <div class="d-flex flex-wrap justify-content-between align-items-center mt-2 gap-3">
+      <div>
+        <h2 class="fw-bold mb-1">🚆 {{ station.name }} ({{ station.code }})</h2>
+        <p class="text-muted small mb-0"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ station.city }}, {{ station.state }} &bull; {{ station.number_of_platforms }} Platforms</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{% url 'bookings:book_coolie' %}?station={{ station.code }}" class="btn btn-rs-accent">
+          <i class="fas fa-luggage-cart me-1"></i> Book Coolie Here
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <!-- Platforms Overview -->
+    <div class="col-lg-12">
+      <div class="rs-card p-4">
+        <h5 class="fw-bold text-primary mb-3"><i class="fas fa-subway me-2"></i> Platform Information</h5>
+        <div class="row g-3">
+          {% for plat in platforms %}
+            <div class="col-md-6 col-lg-4">
+              <div class="p-3 bg-light rounded-4 border h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge bg-primary fs-6 px-3 py-1 rounded-pill">Platform {{ plat.number }}</span>
+                  <div class="d-flex gap-1 text-muted small">
+                    {% if plat.has_lift %}<span title="Lift Available">🛗</span>{% endif %}
+                    {% if plat.has_escalator %}<span title="Escalator">🚶</span>{% endif %}
+                    {% if plat.has_wheelchair_ramp %}<span title="Wheelchair Ramp">♿</span>{% endif %}
+                  </div>
+                </div>
+                <p class="small text-muted mb-0">{{ plat.description|default:'General trains and transit lines.' }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Categorized Facilities -->
+  <div class="rs-card p-4">
+    <h5 class="fw-bold text-primary mb-4"><i class="fas fa-concierge-bell me-2"></i> Station Facilities & Amenities</h5>
+    <div class="row g-4">
+      {% for category, items in categories.items %}
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded-4 border h-100">
+            <h6 class="fw-bold text-dark mb-3 border-bottom pb-2">{{ category }}</h6>
+            <div class="d-flex flex-column gap-2">
+              {% for item in items %}
+                <div class="d-flex justify-content-between align-items-start small">
+                  <div>
+                    <strong class="text-dark">{{ item.name }}</strong>
+                    <div class="text-muted">{{ item.location_description }}</div>
+                  </div>
+                  {% if item.is_operational %}
+                    <span class="badge bg-success-subtle text-success">Operational</span>
+                  {% else %}
+                    <span class="badge bg-danger-subtle text-danger">Maintenance</span>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-12 text-center py-4 text-muted">
+          <p>No listed facilities found.</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

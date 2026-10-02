@@ -1,0 +1,87 @@
+{% extends 'admin_portal/base_admin.html' %}
+
+{% block admin_content %}
+<div class="mb-4">
+  <h3 class="fw-bold mb-1">Passenger Assistance Requests</h3>
+  <p class="text-muted small">Manage wheelchair dispatches, senior citizen aid, and assign Sahayata attendants</p>
+</div>
+
+<div class="rs-card p-4">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 small">
+      <thead class="table-light">
+        <tr>
+          <th>Request ID</th>
+          <th>Passenger</th>
+          <th>Category</th>
+          <th>Station / Platform</th>
+          <th>Description</th>
+          <th>Assigned Attendant</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in requests %}
+          <tr>
+            <td class="fw-bold">#{{ r.request_id }}</td>
+            <td>
+              <div>{{ r.passenger_name }}</div>
+              <span class="text-muted" style="font-size: 11px;">Ph: {{ r.passenger_phone }}</span>
+            </td>
+            <td><strong>{{ r.get_assistance_type_display }}</strong></td>
+            <td>{{ r.station.code }} (Plat {{ r.platform.number|default:'1' }})</td>
+            <td style="max-width: 200px;" class="text-truncate">{{ r.description }}</td>
+            <td>{{ r.assigned_staff_name|default:'Unassigned' }}</td>
+            <td><span class="status-badge badge-rs-{{ r.status|lower }}">{{ r.get_status_display }}</span></td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary py-0 px-2" data-bs-toggle="modal" data-bs-target="#modal-{{ r.request_id }}">
+                Assign / Update
+              </button>
+
+              <!-- Modal for Update -->
+              <div class="modal fade" id="modal-{{ r.request_id }}" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content rounded-4 border-0 shadow-lg">
+                    <div class="modal-header">
+                      <h5 class="modal-title fw-bold">Update Assistance #{{ r.request_id }}</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="post" action="{% url 'admin_portal:assistance' %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="request_id" value="{{ r.request_id }}">
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <label class="form-label small fw-semibold">Status</label>
+                          <select name="status" class="form-select">
+                            {% for key, val in statuses %}
+                              <option value="{{ key }}" {% if r.status == key %}selected{% endif %}>{{ val }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label small fw-semibold">Assign Attendant Name</label>
+                          <input type="text" name="assigned_staff_name" value="{{ r.assigned_staff_name }}" class="form-control" placeholder="e.g. Subhash Roy (Sahayak #12)">
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label small fw-semibold">Attendant Phone Number</label>
+                          <input type="tel" name="assigned_staff_phone" value="{{ r.assigned_staff_phone }}" class="form-control" placeholder="+91 9832299881">
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

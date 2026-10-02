@@ -1,0 +1,83 @@
+{% extends 'admin_portal/base_admin.html' %}
+
+{% block admin_content %}
+<div class="mb-4">
+  <h3 class="fw-bold mb-1">Grievance & Complaints Redressal</h3>
+  <p class="text-muted small">Investigate passenger complaints, assign officers, and post official resolutions</p>
+</div>
+
+<div class="rs-card p-4">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 small">
+      <thead class="table-light">
+        <tr>
+          <th>Ticket ID</th>
+          <th>Category</th>
+          <th>Station</th>
+          <th>Passenger</th>
+          <th>Priority</th>
+          <th>Assigned Officer</th>
+          <th>Status</th>
+          <th>Redressal Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in complaints %}
+          <tr>
+            <td class="fw-bold">#{{ c.ticket_id }}</td>
+            <td><strong>{{ c.get_category_display }}</strong></td>
+            <td>{{ c.station.code }}</td>
+            <td>{{ c.contact_name }} ({{ c.contact_phone }})</td>
+            <td><span class="badge bg-warning text-dark">{{ c.get_priority_display }}</span></td>
+            <td>{{ c.assigned_officer|default:'Unassigned' }}</td>
+            <td><span class="status-badge badge-rs-{{ c.status|lower }}">{{ c.get_status_display }}</span></td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary py-0 px-2" data-bs-toggle="modal" data-bs-target="#cmp-modal-{{ c.ticket_id }}">
+                Resolve
+              </button>
+
+              <div class="modal fade" id="cmp-modal-{{ c.ticket_id }}" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content rounded-4 border-0 shadow-lg">
+                    <div class="modal-header">
+                      <h5 class="modal-title fw-bold">Resolve Ticket #{{ c.ticket_id }}</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="post" action="{% url 'admin_portal:complaints' %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="ticket_id" value="{{ c.ticket_id }}">
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <label class="form-label small fw-semibold">Status</label>
+                          <select name="status" class="form-select">
+                            {% for key, val in statuses %}
+                              <option value="{{ key }}" {% if c.status == key %}selected{% endif %}>{{ val }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label small fw-semibold">Assigned Railway Officer</label>
+                          <input type="text" name="assigned_officer" value="{{ c.assigned_officer }}" class="form-control" placeholder="e.g. Deepak Majumdar (Sanitation Inspector)">
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label small fw-semibold">Resolution Action Taken</label>
+                          <textarea name="resolution_notes" rows="3" class="form-control" placeholder="Describe corrective action (e.g. Housekeeping dispatched / Plumber repaired tap)">{{ c.resolution_notes }}</textarea>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Update Grievance</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Book a Coolie — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="mb-4">
+    <a href="{% url 'landing' %}" class="text-decoration-none text-muted small"><i class="fas fa-arrow-left me-1"></i> Back to Home</a>
+    <h2 class="fw-bold mt-2">🧳 Book a Licensed Railway Coolie</h2>
+    <p class="text-muted small">Select your station, enter train and luggage details, and pick an available verified Sahayak.</p>
+  </div>
+
+  <form method="post" action="{% url 'bookings:book_coolie' %}" id="coolieBookingForm">
+    {% csrf_token %}
+    <div class="row g-4">
+      <!-- Step 1 & 2: Station, Platform & Journey Details -->
+      <div class="col-lg-7">
+        <!-- 1. Station & Train Details Card -->
+        <div class="rs-card p-4 mb-4">
+          <h5 class="fw-bold text-primary mb-3"><i class="fas fa-train me-2"></i> 1. Station & Journey Details</h5>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Select Station *</label>
+              <select name="station_id" id="stationSelect" class="form-select" required>
+                {% for stn in stations %}
+                  <option value="{{ stn.id }}" data-code="{{ stn.code }}" {% if current_station.id == stn.id %}selected{% endif %}>
+                    {{ stn.name }} ({{ stn.code }})
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Platform Number *</label>
+              <select name="platform_id" id="platformSelect" class="form-select" required>
+                {% for plat in platforms %}
+                  <option value="{{ plat.id }}">Platform {{ plat.number }} ({{ plat.description|truncatewords:4 }})</option>
+                {% empty %}
+                  <option value="">Platform 1 (Main)</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Journey Type *</label>
+              <div class="d-flex gap-2">
+                <input type="radio" class="btn-check" name="journey_type" id="arr" value="ARRIVAL" checked>
+                <label class="btn btn-outline-primary flex-fill" for="arr">🛬 Train Arrival (De-boarding)</label>
+
+                <input type="radio" class="btn-check" name="journey_type" id="dep" value="DEPARTURE">
+                <label class="btn btn-outline-primary flex-fill" for="dep">🛫 Departure (Boarding)</label>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Train Number / Name</label>
+              <input type="text" name="train_number" class="form-control" placeholder="e.g. 12042 Shatabdi Express">
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-6 col-md-4">
+              <label class="form-label fw-semibold small">Coach No. (Optional)</label>
+              <input type="text" name="coach_number" class="form-control" placeholder="e.g. B2 / S4 / C1">
+            </div>
+            <div class="col-6 col-md-4">
+              <label class="form-label fw-semibold small">Seat/Berth No.</label>
+              <input type="text" name="seat_number" class="form-control" placeholder="e.g. 45">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold small">Meeting Point</label>
+              <input type="text" name="meeting_point" class="form-control" placeholder="e.g. Near Coach B2 Door / Main Gate">
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Luggage Details Card -->
+        <div class="rs-card p-4 mb-4">
+          <h5 class="fw-bold text-primary mb-3"><i class="fas fa-suitcase me-2"></i> 2. Luggage & Bag Details</h5>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Luggage Category *</label>
+              <select name="luggage_type" class="form-select">
+                <option value="TROLLEY">🧳 Trolley Bags / Rolling Suitcases</option>
+                <option value="HEAVY_BAGS">🎒 Heavy Rucksacks / Duffel Bags</option>
+                <option value="BOXES">📦 Carton Boxes / Heavy Packages</option>
+                <option value="COMBINED">🧳 Mixed Luggage</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Number of Bags *</label>
+              <div class="input-group">
+                <button class="btn btn-outline-secondary" type="button" onclick="changeBags(-1)">-</button>
+                <input type="number" name="number_of_bags" id="bagsInput" class="form-control text-center fw-bold" value="2" min="1" max="15">
+                <button class="btn btn-outline-secondary" type="button" onclick="changeBags(1)">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Special Requests / Assistance Notes (Optional)</label>
+            <textarea name="special_notes" rows="2" class="form-control" placeholder="e.g. Elderly passenger travelling, need slow walking or ramp access"></textarea>
+          </div>
+        </div>
+
+        <!-- 3. Choose Coolie Card -->
+        <div class="rs-card p-4">
+          <h5 class="fw-bold text-primary mb-3"><i class="fas fa-users me-2"></i> 3. Select Available Sahayak</h5>
+
+          {% if available_coolies %}
+            <div class="d-flex flex-column gap-3">
+              {% for coolie in available_coolies %}
+                <label class="coolie-card d-flex align-items-center justify-content-between cursor-pointer p-3 rounded-4 mb-0 border {% if forloop.first %}border-primary bg-primary-subtle bg-opacity-25{% endif %}">
+                  <div class="d-flex align-items-center gap-3">
+                    <input type="radio" name="coolie_id" value="{{ coolie.id }}" {% if forloop.first %}checked{% endif %} class="form-check-input mt-0 fs-5">
+                    <img src="{{ coolie.photo_url|default:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&fit=crop&crop=face' }}" class="rounded-circle" style="width: 54px; height: 54px; object-fit: cover;">
+                    <div>
+                      <div class="fw-bold text-dark fs-6">
+                        {{ coolie.user.get_full_name|default:coolie.user.username }}
+                        <i class="fas fa-check-circle verified-badge ms-1" title="Verified"></i>
+                      </div>
+                      <div class="text-muted small">
+                        Badge: {{ coolie.badge_number }} &bull; {{ coolie.experience_years }} Yrs Exp
+                      </div>
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <span class="rating-pill">⭐ {{ coolie.rating }}</span>
+                    <div class="text-success small fw-semibold mt-1"><i class="fas fa-circle small"></i> Online</div>
+                  </div>
+                </label>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="p-3 bg-light rounded-3 text-center text-muted">
+              <p class="mb-0">Auto-assigning nearest available Sahayak on duty at {{ current_station.name }}.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Right Column: Live Fare Summary & Confirm -->
+      <div class="col-lg-5">
+        <div class="rs-card p-4 sticky-top shadow-lg" style="top: 90px;">
+          <h5 class="fw-bold mb-3">Fare & Booking Summary</h5>
+
+          <div class="p-3 bg-light rounded-4 mb-4">
+            <div class="d-flex justify-content-between mb-2 small">
+              <span class="text-muted">Base Fare (1 Bag):</span>
+              <span class="fw-bold" id="displayBaseFare">₹100</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2 small">
+              <span class="text-muted">Extra Bags Charge (+₹50/bag):</span>
+              <span class="fw-bold" id="displayExtraFare">₹50</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2 small">
+              <span class="text-muted">Platform Convenience Fee:</span>
+              <span class="text-success fw-bold">FREE (₹0)</span>
+            </div>
+            <hr class="my-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-bold text-dark fs-6">Estimated Total Fare:</span>
+              <span class="fw-bold text-success fs-3" id="displayTotalFare">₹150</span>
+            </div>
+          </div>
+
+          <div class="small text-muted mb-4">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <i class="fas fa-shield-alt text-success"></i>
+              <span>Official transparent railway porter pricing</span>
+            </div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <i class="fas fa-money-bill-wave text-primary"></i>
+              <span>Pay directly to coolie upon service completion</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <i class="fas fa-times-circle text-muted"></i>
+              <span>Free cancellation before service starts</span>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-rs-primary btn-accessible-large w-100 fw-bold">
+            <i class="fas fa-check-circle me-2"></i> Confirm & Book Coolie
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+  function changeBags(delta) {
+    const input = document.getElementById('bagsInput');
+    let val = parseInt(input.value) || 1;
+    val = Math.max(1, Math.min(15, val + delta));
+    input.value = val;
+    input.dispatchEvent(new Event('input'));
+  }
+</script>
+{% endblock %}

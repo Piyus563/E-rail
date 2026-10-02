@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 780px;">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">🔔 Your Notifications</h3>
+      <p class="text-muted small mb-0">
+        {% if unread_count > 0 %}
+          <span class="badge bg-danger rounded-pill me-1">{{ unread_count }} unread</span>
+        {% endif %}
+        Live updates for bookings, assistance, and grievances
+      </p>
+    </div>
+    {% if unread_count > 0 %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="mark_all_read" value="1">
+        <button type="submit" class="btn btn-rs-outline btn-sm">
+          <i class="fas fa-check-double me-1"></i> Mark All Read
+        </button>
+      </form>
+    {% endif %}
+  </div>
+
+  <div class="rs-card">
+    {% if notifications %}
+      <div class="list-group list-group-flush">
+        {% for notif in notifications %}
+          <div class="list-group-item border-0 border-bottom p-3 d-flex justify-content-between align-items-start gap-3
+            {% if not notif.is_read %}bg-primary-subtle{% endif %}">
+
+            <div class="d-flex gap-3 align-items-start flex-grow-1">
+              <!-- Icon by type -->
+              <div class="p-2 rounded-circle mt-1 flex-shrink-0
+                {% if notif.notification_type == 'BOOKING' %}bg-primary-subtle text-primary
+                {% elif notif.notification_type == 'ASSISTANCE' %}bg-success-subtle text-success
+                {% elif notif.notification_type == 'LOST_FOUND' %}bg-warning-subtle text-warning
+                {% elif notif.notification_type == 'COMPLAINT' %}bg-danger-subtle text-danger
+                {% else %}bg-secondary-subtle text-secondary{% endif %}">
+                {% if notif.notification_type == 'BOOKING' %}<i class="fas fa-luggage-cart"></i>
+                {% elif notif.notification_type == 'ASSISTANCE' %}<i class="fas fa-wheelchair"></i>
+                {% elif notif.notification_type == 'LOST_FOUND' %}<i class="fas fa-search"></i>
+                {% elif notif.notification_type == 'COMPLAINT' %}<i class="fas fa-bullhorn"></i>
+                {% else %}<i class="fas fa-bell"></i>{% endif %}
+              </div>
+
+              <div class="flex-grow-1">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <h6 class="fw-bold mb-0">{{ notif.title }}</h6>
+                  {% if not notif.is_read %}
+                    <span class="badge bg-primary rounded-pill" style="font-size:10px;">New</span>
+                  {% endif %}
+                </div>
+                <p class="text-muted small mb-1">{{ notif.message }}</p>
+                <span class="text-muted" style="font-size: 11px;">
+                  <i class="fas fa-clock me-1"></i>{{ notif.created_at|date:"d M Y, h:i A" }}
+                </span>
+              </div>
+            </div>
+
+            <div class="d-flex flex-column gap-1 align-items-end flex-shrink-0">
+              {% if notif.link_url %}
+                <a href="{% url 'notifications:mark_read' notif.pk %}" class="btn btn-sm btn-rs-accent">
+                  View <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+              {% endif %}
+              {% if not notif.is_read %}
+                <a href="{% url 'notifications:mark_read' notif.pk %}" class="btn btn-sm btn-rs-outline">
+                  <i class="fas fa-check me-1"></i> Mark Read
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="fas fa-bell-slash fs-1 text-secondary mb-3 d-block"></i>
+        <h5>No Notifications Yet</h5>
+        <p class="small">We'll alert you here when your coolie accepts a booking or your assistance request updates.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

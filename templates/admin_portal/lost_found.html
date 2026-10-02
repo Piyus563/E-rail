@@ -1,0 +1,81 @@
+{% extends 'admin_portal/base_admin.html' %}
+
+{% block admin_content %}
+<div class="mb-4">
+  <h3 class="fw-bold mb-1">Lost & Found Management</h3>
+  <p class="text-muted small">Verify reports, manage storage custody, and record item handovers</p>
+</div>
+
+<div class="rs-card p-4">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 small">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Type</th>
+          <th>Item Name</th>
+          <th>Station</th>
+          <th>Reported By</th>
+          <th>Status</th>
+          <th>Update</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in reports %}
+          <tr>
+            <td class="fw-bold">#{{ item.report_id }}</td>
+            <td>
+              <span class="badge {% if item.report_type == 'LOST' %}bg-danger{% else %}bg-success{% endif %}">
+                {{ item.get_report_type_display }}
+              </span>
+            </td>
+            <td><strong>{{ item.item_name }}</strong></td>
+            <td>{{ item.station.code }} (Plat {{ item.platform.number|default:'-' }})</td>
+            <td>{{ item.contact_name }} ({{ item.contact_phone }})</td>
+            <td><span class="badge bg-secondary">{{ item.get_status_display }}</span></td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary py-0 px-2" data-bs-toggle="modal" data-bs-target="#modal-{{ item.report_id }}">
+                Manage
+              </button>
+
+              <div class="modal fade" id="modal-{{ item.report_id }}" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content rounded-4 border-0 shadow-lg">
+                    <div class="modal-header">
+                      <h5 class="modal-title fw-bold">Manage Report #{{ item.report_id }}</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form method="post" action="{% url 'admin_portal:lost_found' %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="report_id" value="{{ item.report_id }}">
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <label class="form-label small fw-semibold">Status</label>
+                          <select name="status" class="form-select">
+                            {% for key, val in statuses %}
+                              <option value="{{ key }}" {% if item.status == key %}selected{% endif %}>{{ val }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label small fw-semibold">Admin / RPF Notes</label>
+                          <textarea name="admin_notes" rows="3" class="form-control">{{ item.admin_notes }}</textarea>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Update Report</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

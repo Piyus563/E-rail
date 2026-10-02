@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Ticket #{{ complaint.ticket_id }} — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="mb-4">
+        <a href="{% url 'complaints:submit' %}" class="text-decoration-none text-muted small"><i class="fas fa-arrow-left me-1"></i> New Complaint</a>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+          <h2 class="fw-bold mb-0">Grievance Ticket &bull; #{{ complaint.ticket_id }}</h2>
+          <span class="status-badge badge-rs-{{ complaint.status|lower }} fs-6 px-3 py-1">
+            {{ complaint.get_status_display }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Timeline Progress -->
+      <div class="rs-card p-4 p-md-5 mb-4 shadow-sm">
+        <h5 class="fw-bold text-primary mb-3">Redressal Status Timeline</h5>
+        <div class="timeline-stepper my-3">
+          <div class="timeline-step {% if complaint.status == 'NEW' %}active{% elif complaint.status in 'ASSIGNED,IN_PROGRESS,RESOLVED' %}completed{% endif %}">
+            <div class="step-icon">{% if complaint.status in 'ASSIGNED,IN_PROGRESS,RESOLVED' %}<i class="fas fa-check"></i>{% else %}1{% endif %}</div>
+            <div class="step-title">Registered</div>
+          </div>
+          <div class="timeline-step {% if complaint.status == 'ASSIGNED' %}active{% elif complaint.status in 'IN_PROGRESS,RESOLVED' %}completed{% endif %}">
+            <div class="step-icon">{% if complaint.status in 'IN_PROGRESS,RESOLVED' %}<i class="fas fa-check"></i>{% else %}2{% endif %}</div>
+            <div class="step-title">Assigned</div>
+          </div>
+          <div class="timeline-step {% if complaint.status == 'IN_PROGRESS' %}active{% elif complaint.status == 'RESOLVED' %}completed{% endif %}">
+            <div class="step-icon">{% if complaint.status == 'RESOLVED' %}<i class="fas fa-check"></i>{% else %}3{% endif %}</div>
+            <div class="step-title">In Progress</div>
+          </div>
+          <div class="timeline-step {% if complaint.status == 'RESOLVED' %}completed active{% endif %}">
+            <div class="step-icon">{% if complaint.status == 'RESOLVED' %}<i class="fas fa-check-double text-success"></i>{% else %}4{% endif %}</div>
+            <div class="step-title">Resolved</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ticket Details -->
+      <div class="rs-card p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span class="badge bg-light text-dark border">{{ complaint.get_category_display }}</span>
+          <span class="badge bg-warning text-dark">{{ complaint.get_priority_display }}</span>
+        </div>
+
+        <h5 class="fw-bold text-dark mb-2">Complaint Summary</h5>
+        <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt text-danger me-1"></i> {{ complaint.station.name }} (Platform {{ complaint.platform.number|default:'General' }}) &bull; Filed on {{ complaint.created_at|date:"d M Y, h:i A" }}</p>
+
+        <div class="p-3 bg-light rounded-4 mb-4">
+          <h6 class="fw-bold text-dark mb-2">Detailed Grievance:</h6>
+          <p class="mb-0 text-secondary">{{ complaint.description }}</p>
+        </div>
+
+        {% if complaint.assigned_officer %}
+          <div class="p-3 bg-primary-subtle rounded-3 mb-3">
+            <strong>Assigned Railway Officer:</strong> {{ complaint.assigned_officer }}
+          </div>
+        {% endif %}
+
+        {% if complaint.resolution_notes %}
+          <div class="p-3 bg-success-subtle border border-success border-opacity-25 rounded-3 mb-3">
+            <h6 class="fw-bold text-success mb-1"><i class="fas fa-check-circle me-1"></i> Resolution Action Taken:</h6>
+            <p class="small text-dark mb-0">{{ complaint.resolution_notes }}</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block title %}Sahayak Dashboard — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <!-- Profile & Status Banner -->
+  <div class="rs-card p-4 mb-4 bg-white shadow-md">
+    <div class="row align-items-center g-3">
+      <div class="col-md-7 d-flex align-items-center gap-3">
+        <div class="position-relative">
+          <img src="{{ coolie.photo_url|default:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&fit=crop&crop=face' }}" alt="{{ coolie.user.get_full_name }}" class="coolie-avatar">
+          {% if coolie.is_online %}
+            <span class="position-absolute bottom-0 end-0 p-2 bg-success border border-2 border-white rounded-circle" title="Online"></span>
+          {% else %}
+            <span class="position-absolute bottom-0 end-0 p-2 bg-secondary border border-2 border-white rounded-circle" title="Offline"></span>
+          {% endif %}
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <h3 class="fw-bold mb-0">{{ coolie.user.get_full_name|default:coolie.user.username }}</h3>
+            <span class="badge bg-primary-subtle text-primary fw-bold">Badge #{{ coolie.badge_number }}</span>
+          </div>
+          <div class="text-muted small mt-1">
+            <i class="fas fa-map-marker-alt text-danger me-1"></i> {{ coolie.station.name }} &bull;
+            <span class="rating-pill py-0 px-2 small">⭐ {{ coolie.rating }} ({{ coolie.total_ratings_count }})</span> &bull;
+            <span>{{ coolie.experience_years }} Yrs Exp</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Online / Offline Toggle Form -->
+      <div class="col-md-5 text-md-end">
+        <form method="post" action="{% url 'coolies:dashboard' %}" class="d-inline-block">
+          {% csrf_token %}
+          <input type="hidden" name="toggle_status" value="1">
+          {% if coolie.is_online %}
+            <button type="submit" class="btn btn-success btn-accessible-large shadow-sm">
+              <i class="fas fa-toggle-on me-2 fs-5"></i> <strong>🟢 Online (Ready for Tasks)</strong>
+            </button>
+          {% else %}
+            <button type="submit" class="btn btn-outline-secondary btn-accessible-large">
+              <i class="fas fa-toggle-off me-2 fs-5"></i> <strong>🔴 Offline (Tap to Go Online)</strong>
+            </button>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metric Statistics Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <div class="rs-card p-3 text-center bg-white">
+        <span class="text-muted small fw-bold text-uppercase">Today's Completed</span>
+        <h2 class="fw-bold text-primary mb-0 mt-1">{{ today_count }}</h2>
+        <span class="text-success small"><i class="fas fa-check-circle me-1"></i>Finished</span>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="rs-card p-3 text-center bg-white">
+        <span class="text-muted small fw-bold text-uppercase">Today's Earnings</span>
+        <h2 class="fw-bold text-success mb-0 mt-1">₹{{ today_earnings }}</h2>
+        <span class="text-muted small">Daily Cash & Fare</span>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="rs-card p-3 text-center bg-white">
+        <span class="text-muted small fw-bold text-uppercase">Pending Requests</span>
+        <h2 class="fw-bold text-warning mb-0 mt-1">{{ pending_requests.count }}</h2>
+        <span class="text-warning small"><i class="fas fa-clock me-1"></i>Waiting Accept</span>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="rs-card p-3 text-center bg-white">
+        <span class="text-muted small fw-bold text-uppercase">Lifetime Rating</span>
+        <h2 class="fw-bold text-dark mb-0 mt-1">⭐ {{ coolie.rating }}</h2>
+        <span class="text-muted small">{{ coolie.total_bookings_count }} Total Trips</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Booking Requests Section -->
+  <div class="row g-4">
+    <!-- Active Tasks & New Incoming Requests -->
+    <div class="col-lg-8">
+      <!-- 1. New Pending Requests (Need Accept / Reject) -->
+      <div class="rs-card p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0 text-warning d-flex align-items-center gap-2">
+            <span class="pulse-dot"></span> New Booking Requests ({{ pending_requests.count }})
+          </h5>
+          <span class="small text-muted">Respond quickly to confirm passengers</span>
+        </div>
+
+        {% if pending_requests %}
+          <div class="d-flex flex-column gap-3">
+            {% for req in pending_requests %}
+              <div class="p-3 border-2 border-warning border rounded-4 bg-light shadow-sm">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                  <div>
+                    <span class="badge bg-warning text-dark fw-bold me-1">NEW REQUEST</span>
+                    <span class="fw-bold text-dark">#{{ req.booking_id }}</span>
+                  </div>
+                  <div class="h5 fw-bold text-success mb-0">₹{{ req.total_fare }}</div>
+                </div>
+
+                <div class="row g-2 small text-muted mb-3">
+                  <div class="col-sm-6"><strong>👤 Passenger:</strong> {{ req.passenger.get_full_name|default:req.passenger.username }}</div>
+                  <div class="col-sm-6"><strong>📞 Phone:</strong> {{ req.passenger.phone|default:'Provided on Accept' }}</div>
+                  <div class="col-sm-6"><strong>🚉 Platform:</strong> Platform {{ req.platform.number|default:'1' }}</div>
+                  <div class="col-sm-6"><strong>🚆 Train/Coach:</strong> {{ req.train_number }} (Coach {{ req.coach_number|default:'General' }})</div>
+                  <div class="col-sm-6"><strong>🧳 Luggage:</strong> {{ req.number_of_bags }} Bags ({{ req.get_luggage_type_display }})</div>
+                  <div class="col-sm-6"><strong>📍 Meeting Point:</strong> {{ req.meeting_point }}</div>
+                </div>
+
+                <div class="d-flex gap-2">
+                  <a href="{% url 'coolies:update_booking_status' req.booking_id 'accept' %}" class="btn btn-success btn-accessible-large w-50 fw-bold">
+                    <i class="fas fa-check me-1"></i> Accept Booking (₹{{ req.total_fare }})
+                  </a>
+                  <a href="{% url 'coolies:update_booking_status' req.booking_id 'reject' %}" class="btn btn-outline-danger btn-accessible-large w-50">
+                    <i class="fas fa-times me-1"></i> Decline
+                  </a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="fas fa-inbox fs-2 text-secondary mb-2"></i>
+            <p class="mb-0">No new pending requests right now. Stay online to receive passenger alerts!</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- 2. Active In-Progress Tasks (Start Service / Complete Service) -->
+      <div class="rs-card p-4">
+        <h5 class="fw-bold mb-3 text-primary">In-Progress Services</h5>
+
+        {% if active_tasks %}
+          <div class="d-flex flex-column gap-3">
+            {% for task in active_tasks %}
+              <div class="p-3 border rounded-4 bg-white shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="status-badge badge-rs-{{ task.status|lower }}">{{ task.get_status_display }}</span>
+                  <span class="fw-bold text-success fs-5">₹{{ task.total_fare }}</span>
+                </div>
+
+                <h6 class="fw-bold mb-1">{{ task.passenger.get_full_name|default:task.passenger.username }} &bull; Ph: {{ task.passenger.phone }}</h6>
+                <p class="text-muted small mb-3">
+                  <strong>Location:</strong> {{ task.station.code }} Platform {{ task.platform.number|default:'1' }} &bull; Coach: {{ task.coach_number|default:'N/A' }} &bull; Meeting: {{ task.meeting_point }}
+                </p>
+
+                {% if task.status == 'ACCEPTED' %}
+                  <a href="{% url 'coolies:update_booking_status' task.booking_id 'start' %}" class="btn btn-primary btn-accessible-large w-100 fw-bold">
+                    <i class="fas fa-play me-2"></i> I Met the Passenger &rarr; Start Luggage Service
+                  </a>
+                {% elif task.status == 'SERVICE_STARTED' %}
+                  <a href="{% url 'coolies:update_booking_status' task.booking_id 'complete' %}" class="btn btn-success btn-accessible-large w-100 fw-bold">
+                    <i class="fas fa-check-double me-2"></i> Service Finished &rarr; Mark as Completed (Collect ₹{{ task.total_fare }})
+                  </a>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <p class="mb-0">No active tasks currently underway.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Completed Tasks & Customer Reviews Sidebar -->
+    <div class="col-lg-4">
+      <div class="rs-card p-4 mb-4">
+        <h5 class="fw-bold mb-3">Recent Completed</h5>
+        {% if completed_tasks %}
+          <div class="d-flex flex-column gap-2">
+            {% for c in completed_tasks %}
+              <div class="p-2 border rounded-3 small bg-light">
+                <div class="d-flex justify-content-between fw-bold">
+                  <span>#{{ c.booking_id }}</span>
+                  <span class="text-success">+₹{{ c.total_fare }}</span>
+                </div>
+                <div class="text-muted" style="font-size: 11px;">{{ c.completed_at|date:"d M, h:i A" }} &bull; {{ c.number_of_bags }} Bags</div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted small">No completed jobs recorded yet today.</p>
+        {% endif %}
+      </div>
+
+      <div class="rs-card p-4">
+        <h5 class="fw-bold mb-3">Passenger Feedback</h5>
+        {% if reviews %}
+          <div class="d-flex flex-column gap-2">
+            {% for r in reviews %}
+              <div class="p-2 bg-light rounded-3 small">
+                <div class="d-flex justify-content-between">
+                  <strong>{{ r.passenger.first_name }}</strong>
+                  <span class="text-warning">⭐ {{ r.rating }}</span>
+                </div>
+                <p class="text-muted mb-0" style="font-size: 11px;">"{{ r.comment|truncatewords:10 }}"</p>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted small">No reviews yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Lodge Complaint & Feedback — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="mb-4 text-center">
+        <h2 class="fw-bold mb-1">📢 Railway Grievance & Feedback Redressal</h2>
+        <p class="text-muted small">Submit complaints regarding station cleanliness, defective facilities, coolie overcharging, or staff conduct.</p>
+      </div>
+
+      <div class="rs-card p-4 p-md-5 shadow-lg">
+        <form method="post" action="{% url 'complaints:submit' %}" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Grievance Category *</label>
+              <select name="category" class="form-select" required>
+                {% for cat_key, cat_name in categories %}
+                  <option value="{{ cat_key }}">{{ cat_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Priority Level *</label>
+              <select name="priority" class="form-select">
+                {% for p_key, p_name in priorities %}
+                  <option value="{{ p_key }}" {% if p_key == 'MEDIUM' %}selected{% endif %}>{{ p_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Station *</label>
+              <select name="station_id" class="form-select" required>
+                {% for stn in stations %}
+                  <option value="{{ stn.id }}" {% if default_station.id == stn.id %}selected{% endif %}>
+                    {{ stn.name }} ({{ stn.code }})
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Platform / Specific Area</label>
+              <select name="platform_id" class="form-select">
+                <option value="">General Station Concourse</option>
+                {% for plat in platforms %}
+                  <option value="{{ plat.id }}">Platform {{ plat.number }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Complaint Description *</label>
+            <textarea name="description" rows="4" class="form-control" placeholder="Provide full details. If regarding coolie overcharging or misconduct, mention coolie badge number if known." required></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Photo Proof / Evidence (Optional)</label>
+            <input type="file" name="image" class="form-control" accept="image/*">
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Your Name *</label>
+              <input type="text" name="contact_name" value="{{ user.get_full_name|default:'' }}" class="form-control" placeholder="Your full name" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold small">Mobile Number *</label>
+              <input type="tel" name="contact_phone" value="{{ user.phone|default:'' }}" class="form-control" placeholder="+91 9876543210" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-rs-primary btn-accessible-large w-100 fw-bold">
+            <i class="fas fa-paper-plane me-2"></i> Submit Grievance Ticket
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

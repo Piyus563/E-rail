@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Assistance Requests — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">♿ Your Assistance Requests</h3>
+      <p class="text-muted small mb-0">Track history and live progress of your wheelchair and passenger aid requests.</p>
+    </div>
+    <a href="{% url 'assistance:request' %}" class="btn btn-rs-primary">
+      <i class="fas fa-plus me-1"></i> New Request
+    </a>
+  </div>
+
+  <div class="rs-card p-4">
+    {% if requests %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light small">
+            <tr>
+              <th>Request ID</th>
+              <th>Category</th>
+              <th>Station / Platform</th>
+              <th>Date</th>
+              <th>Assigned Staff</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody class="small">
+            {% for r in requests %}
+              <tr>
+                <td class="fw-bold">#{{ r.request_id }}</td>
+                <td>{{ r.get_assistance_type_display }}</td>
+                <td>{{ r.station.code }} (Plat {{ r.platform.number|default:'1' }})</td>
+                <td>{{ r.created_at|date:"d M Y, h:i A" }}</td>
+                <td>{{ r.assigned_staff_name|default:'Pending Assignment' }}</td>
+                <td><span class="status-badge badge-rs-{{ r.status|lower }}">{{ r.get_status_display }}</span></td>
+                <td>
+                  <a href="{% url 'assistance:detail' r.request_id %}" class="btn btn-sm btn-rs-outline py-1 px-3">
+                    Track
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="fas fa-wheelchair fs-1 text-secondary mb-2"></i>
+        <h5>No Assistance Requests Found</h5>
+        <a href="{% url 'assistance:request' %}" class="btn btn-rs-primary mt-2">Request Assistance</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

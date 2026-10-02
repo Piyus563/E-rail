@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Report #{{ report.report_id }} — RailSaathi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="mb-4">
+        <a href="{% url 'lost_found:index' %}" class="text-decoration-none text-muted small"><i class="fas fa-arrow-left me-1"></i> Back to Lost & Found Notice Board</a>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+          <h2 class="fw-bold mb-0">Report &bull; #{{ report.report_id }}</h2>
+          <span class="badge {% if report.report_type == 'LOST' %}bg-danger{% else %}bg-success{% endif %} fs-6 px-3 py-1">
+            {{ report.get_report_type_display }}
+          </span>
+        </div>
+      </div>
+
+      <div class="rs-card p-4 p-md-5 mb-4 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span class="badge bg-light text-dark border px-3 py-1">{{ report.get_category_display }}</span>
+          <span class="badge bg-primary fs-6">{{ report.get_status_display }}</span>
+        </div>
+
+        <h3 class="fw-bold text-dark mb-2">{{ report.item_name }}</h3>
+        <p class="text-muted small mb-4"><i class="fas fa-map-marker-alt text-danger me-1"></i> Station: <strong>{{ report.station.name }}</strong> (Platform {{ report.platform.number|default:'General' }}) &bull; Date: {{ report.created_at|date:"d M Y, h:i A" }}</p>
+
+        <div class="p-3 bg-light rounded-4 mb-4">
+          <h6 class="fw-bold text-dark mb-2">Item Description & Identifying Marks:</h6>
+          <p class="mb-0 text-secondary">{{ report.description }}</p>
+        </div>
+
+        {% if report.storage_location %}
+          <div class="alert alert-info rounded-3 mb-4">
+            <h6 class="fw-bold mb-1"><i class="fas fa-box me-1"></i> Safe Custody Location:</h6>
+            <p class="small mb-0">{{ report.storage_location }}</p>
+          </div>
+        {% endif %}
+
+        {% if report.admin_notes %}
+          <div class="p-3 border rounded-3 bg-light mb-4">
+            <h6 class="fw-bold text-primary mb-1"><i class="fas fa-user-shield me-1"></i> Railway Security / Admin Notes:</h6>
+            <p class="small text-muted mb-0">{{ report.admin_notes }}</p>
+          </div>
+        {% endif %}
+
+        <div class="p-3 bg-light rounded-4">
+          <h6 class="fw-bold text-dark mb-2">Contact Details for Claiming / Inquiries:</h6>
+          <div class="row g-2 small text-muted">
+            <div class="col-sm-6"><strong>Contact Person:</strong> {{ report.contact_name }}</div>
+            <div class="col-sm-6"><strong>Phone:</strong> {{ report.contact_phone }}</div>
+            {% if report.contact_email %}
+              <div class="col-sm-6"><strong>Email:</strong> {{ report.contact_email }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
