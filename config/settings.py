@@ -5,6 +5,9 @@ Django settings for RailSaathi project.
 import os
 from pathlib import Path
 
+import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load .env file if present
@@ -18,25 +21,29 @@ if _env_path.exists():
                 os.environ.setdefault(_key.strip(), _val.strip())
 
 # Security settings
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-railsaathi-secret-key-prod-grade-mvp-2026')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1', 't')
 _is_render = os.environ.get('RENDER', '').lower() == 'true'
 if _is_render:
     DEBUG = False
 
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '')
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured('DJANGO_SECRET_KEY must be set when DEBUG is False.')
+    SECRET_KEY = 'django-insecure-local-development-only-key'
+
 # In production set ALLOWED_HOSTS via environment; never use '*' in production
+_render_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '').strip()
 _allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '')
 if _allowed_hosts_env:
     ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(',') if h.strip()]
 elif DEBUG:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
 else:
-    ALLOWED_HOSTS = []  # Must be set via ALLOWED_HOSTS env var in production
+    ALLOWED_HOSTS = []
 
-if _is_render:
-    _render_hostname = os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'e-rail.onrender.com')
-    if _render_hostname and _render_hostname not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(_render_hostname)
+if _render_hostname and _render_hostname not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_render_hostname)
 
 # Application definition
 INSTALLED_APPS = [
@@ -99,16 +106,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database configuration: supports PostgreSQL or SQLite fallback
+# Database configuration: DATABASE_URL for hosted databases, SQLite locally.
+_database_url = os.environ.get('DATABASE_URL', '').strip()
 DB_ENGINE = os.environ.get('DB_ENGINE', 'sqlite')
 
-if DB_ENGINE == 'postgres' or os.environ.get('POSTGRES_DB'):
+if _database_url:
+    DATABASES = {
+        'default': dj_database_url.parse(
+            _database_url,
+            conn_max_age=600,
+            ssl_require=not DEBUG,
+        )
+    }
+elif DB_ENGINE == 'postgres' or os.environ.get('POSTGRES_DB'):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('POSTGRES_DB', 'railsaathi'),
-            'USER': os.environ.get('POSTGRES_USER', 'postgres'),
-            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'postgres'),
+            'NAME': os.environ.get('POSTGRES_DB', ''),
+            'USER': os.environ.get('POSTGRES_USER', ''),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', ''),
             'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
             'PORT': os.environ.get('POSTGRES_PORT', '5432'),
         }
@@ -180,6 +196,10 @@ else:
     CORS_ALLOW_ALL_ORIGINS = False
     CORS_ALLOWED_ORIGINS = []
 
+_render_origin = f'https://{_render_hostname}' if _render_hostname else ''
+if _render_origin and _render_origin not in CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS.append(_render_origin)
+
 # Security headers (active in production; harmless in development)
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
@@ -199,6 +219,8 @@ CSRF_TRUSTED_ORIGINS = [
     for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
     if origin.strip()
 ]
+if _render_origin and _render_origin not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(_render_origin)
 
 # Auth Redirects
 LOGIN_URL = 'accounts:login'
@@ -211,7 +233,10 @@ TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN', '')
 TWILIO_WHATSAPP_FROM = os.environ.get('TWILIO_WHATSAPP_FROM', 'whatsapp:+14155238886')
 
 # Public site URL — used in WhatsApp messages; override in production
-SITE_URL = os.environ.get('SITE_URL', 'http://127.0.0.1:8000')
+SITE_URL = os.environ.get(
+    'SITE_URL',
+    _render_origin or 'http://127.0.0.1:8000',
+).rstrip('/')
 
 # Logging
 LOGGING = {

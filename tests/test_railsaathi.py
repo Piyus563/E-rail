@@ -1,5 +1,5 @@
 from decimal import Decimal
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.urls import reverse, NoReverseMatch
 from django.utils import timezone
 
@@ -13,6 +13,20 @@ from reviews.models import Review
 
 
 class RailSaathiCoreTests(TestCase):
+    def test_seed_accounts_have_no_default_passwords_in_production(self):
+        from accounts.management.commands.seed_data import _set_seed_password
+
+        new_user = User(username='new_seed_user')
+        existing_user = User(username='existing_seed_user')
+        existing_user.set_password('admin123')
+
+        with override_settings(DEBUG=False):
+            _set_seed_password(new_user, 'admin123', created=True)
+            _set_seed_password(existing_user, 'admin123', created=False)
+
+        self.assertFalse(new_user.has_usable_password())
+        self.assertFalse(existing_user.has_usable_password())
+
     def test_station_map_routes_removed(self):
         """The app should no longer expose interactive station map routes."""
         with self.assertRaises(NoReverseMatch):

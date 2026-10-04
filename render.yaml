@@ -12,10 +12,12 @@ services:
       - key: DJANGO_DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: e-rail.onrender.com
+        value: e-rail-1.onrender.com
       - key: CSRF_TRUSTED_ORIGINS
-        value: https://e-rail.onrender.com
+        value: https://e-rail-1.onrender.com
       - key: SITE_URL
-        value: https://e-rail.onrender.com
+        value: https://e-rail-1.onrender.com
       - key: CORS_ALLOWED_ORIGINS
-        value: https://e-rail.onrender.com
+        value: https://e-rail-1.onrender.com
+      - key: DATABASE_URL
+        sync: false

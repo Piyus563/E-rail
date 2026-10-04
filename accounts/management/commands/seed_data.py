@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta
@@ -11,6 +12,13 @@ from lost_found.models import LostFoundReport
 from complaints.models import Complaint
 from reviews.models import Review, StationReview
 from notifications.models import Notification
+
+
+def _set_seed_password(user, password, created):
+    if settings.DEBUG:
+        user.set_password(password)
+    elif created or not user.password or user.check_password(password):
+        user.set_unusable_password()
 
 
 class Command(BaseCommand):
@@ -108,7 +116,7 @@ class Command(BaseCommand):
 
         # 4. Create Users: Admin, Passenger, Coolies
         # Admin User
-        admin_user, _ = User.objects.get_or_create(
+        admin_user, admin_created = User.objects.get_or_create(
             username='admin',
             defaults={
                 'email': 'admin@railsaathi.com',
@@ -120,11 +128,11 @@ class Command(BaseCommand):
                 'is_superuser': True,
             }
         )
-        admin_user.set_password('admin123')
+        _set_seed_password(admin_user, 'admin123', admin_created)
         admin_user.save()
 
         # Passenger User
-        passenger_user, _ = User.objects.get_or_create(
+        passenger_user, passenger_created = User.objects.get_or_create(
             username='priya_singh',
             defaults={
                 'email': 'passenger@railsaathi.com',
@@ -134,7 +142,7 @@ class Command(BaseCommand):
                 'phone': '+91 9876543210',
             }
         )
-        passenger_user.set_password('pass123')
+        _set_seed_password(passenger_user, 'pass123', passenger_created)
         passenger_user.save()
         PassengerProfile.objects.get_or_create(
             user=passenger_user,
@@ -142,7 +150,7 @@ class Command(BaseCommand):
         )
 
         # Additional Passenger for reviews & bookings
-        passenger2, _ = User.objects.get_or_create(
+        passenger2, passenger2_created = User.objects.get_or_create(
             username='arjun_verma',
             defaults={
                 'email': 'arjun@gmail.com',
@@ -152,7 +160,7 @@ class Command(BaseCommand):
                 'phone': '+91 9811223344',
             }
         )
-        passenger2.set_password('pass123')
+        _set_seed_password(passenger2, 'pass123', passenger2_created)
         passenger2.save()
         PassengerProfile.objects.get_or_create(
             user=passenger2,
@@ -170,7 +178,7 @@ class Command(BaseCommand):
 
         coolie_profiles = []
         for uname, email, fname, lname, phone, badge, exp, rating, rat_count, online, plat, earn, total_bkg, photo in coolie_specs:
-            user_obj, _ = User.objects.get_or_create(
+            user_obj, user_created = User.objects.get_or_create(
                 username=uname,
                 defaults={
                     'email': email,
@@ -180,7 +188,7 @@ class Command(BaseCommand):
                     'phone': phone,
                 }
             )
-            user_obj.set_password('coolie123')
+            _set_seed_password(user_obj, 'coolie123', user_created)
             user_obj.save()
 
             cp, _ = CoolieProfile.objects.get_or_create(
@@ -461,10 +469,13 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("[OK] Seed data created successfully for RailSaathi!"))
         self.stdout.write("==================================================")
-        self.stdout.write("DEMO ACCOUNTS READY FOR TESTING:")
-        self.stdout.write("1. Admin:     admin@railsaathi.com    / admin123 (username: admin)")
-        self.stdout.write("2. Passenger: passenger@railsaathi.com / pass123 (username: priya_singh)")
-        self.stdout.write("3. Coolie:    ramesh@railsaathi.com   / coolie123 (username: ramesh_kumar)")
-        self.stdout.write("4. Coolie:    suresh@railsaathi.com   / coolie123 (username: suresh_sah)")
-        self.stdout.write("5. Coolie:    manoj@railsaathi.com    / coolie123 (username: manoj_yadav)")
+        if settings.DEBUG:
+            self.stdout.write("DEMO ACCOUNTS READY FOR TESTING:")
+            self.stdout.write("1. Admin:     admin@railsaathi.com    / admin123 (username: admin)")
+            self.stdout.write("2. Passenger: passenger@railsaathi.com / pass123 (username: priya_singh)")
+            self.stdout.write("3. Coolie:    ramesh@railsaathi.com   / coolie123 (username: ramesh_kumar)")
+            self.stdout.write("4. Coolie:    suresh@railsaathi.com   / coolie123 (username: suresh_sah)")
+            self.stdout.write("5. Coolie:    manoj@railsaathi.com   / coolie123 (username: manoj_yadav)")
+        else:
+            self.stdout.write("Seeded demo accounts have no usable passwords in production.")
         self.stdout.write("==================================================")
